@@ -15,6 +15,7 @@ import { Route as RequestVerifyingRouteImport } from './routes/request.verifying
 import { Route as RequestProofRouteImport } from './routes/request.proof'
 import { Route as RequestMatchingRouteImport } from './routes/request.matching'
 import { Route as RequestHospitalRouteImport } from './routes/request.hospital'
+import { Route as RequestConfirmedRouteImport } from './routes/request.confirmed'
 import { Route as RequestBloodRouteImport } from './routes/request.blood'
 
 const RequestRoute = RequestRouteImport.update({
@@ -47,6 +48,11 @@ const RequestHospitalRoute = RequestHospitalRouteImport.update({
   path: '/hospital',
   getParentRoute: () => RequestRoute,
 } as any)
+const RequestConfirmedRoute = RequestConfirmedRouteImport.update({
+  id: '/confirmed',
+  path: '/confirmed',
+  getParentRoute: () => RequestRoute,
+} as any)
 const RequestBloodRoute = RequestBloodRouteImport.update({
   id: '/blood',
   path: '/blood',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/request': typeof RequestRouteWithChildren
   '/request/blood': typeof RequestBloodRoute
+  '/request/confirmed': typeof RequestConfirmedRoute
   '/request/hospital': typeof RequestHospitalRoute
   '/request/matching': typeof RequestMatchingRoute
   '/request/proof': typeof RequestProofRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/request': typeof RequestRouteWithChildren
   '/request/blood': typeof RequestBloodRoute
+  '/request/confirmed': typeof RequestConfirmedRoute
   '/request/hospital': typeof RequestHospitalRoute
   '/request/matching': typeof RequestMatchingRoute
   '/request/proof': typeof RequestProofRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/request': typeof RequestRouteWithChildren
   '/request/blood': typeof RequestBloodRoute
+  '/request/confirmed': typeof RequestConfirmedRoute
   '/request/hospital': typeof RequestHospitalRoute
   '/request/matching': typeof RequestMatchingRoute
   '/request/proof': typeof RequestProofRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/request'
     | '/request/blood'
+    | '/request/confirmed'
     | '/request/hospital'
     | '/request/matching'
     | '/request/proof'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/request'
     | '/request/blood'
+    | '/request/confirmed'
     | '/request/hospital'
     | '/request/matching'
     | '/request/proof'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/request'
     | '/request/blood'
+    | '/request/confirmed'
     | '/request/hospital'
     | '/request/matching'
     | '/request/proof'
@@ -160,6 +172,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RequestHospitalRouteImport
       parentRoute: typeof RequestRoute
     }
+    '/request/confirmed': {
+      id: '/request/confirmed'
+      path: '/confirmed'
+      fullPath: '/request/confirmed'
+      preLoaderRoute: typeof RequestConfirmedRouteImport
+      parentRoute: typeof RequestRoute
+    }
     '/request/blood': {
       id: '/request/blood'
       path: '/blood'
@@ -172,6 +191,7 @@ declare module '@tanstack/react-router' {
 
 interface RequestRouteChildren {
   RequestBloodRoute: typeof RequestBloodRoute
+  RequestConfirmedRoute: typeof RequestConfirmedRoute
   RequestHospitalRoute: typeof RequestHospitalRoute
   RequestMatchingRoute: typeof RequestMatchingRoute
   RequestProofRoute: typeof RequestProofRoute
@@ -180,6 +200,7 @@ interface RequestRouteChildren {
 
 const RequestRouteChildren: RequestRouteChildren = {
   RequestBloodRoute: RequestBloodRoute,
+  RequestConfirmedRoute: RequestConfirmedRoute,
   RequestHospitalRoute: RequestHospitalRoute,
   RequestMatchingRoute: RequestMatchingRoute,
   RequestProofRoute: RequestProofRoute,
@@ -196,3 +217,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
