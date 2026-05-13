@@ -76,10 +76,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Redstream Foundation connects patients in urgent need of blood with verified, nearby volunteer donors across Delhi. Fast, private, NGO-led." },
       { name: "author", content: "Redstream Foundation" },
       { property: "og:title", content: "Redstream Foundation — Emergency Blood Donors in Delhi" },
-      { property: "og:description", content: "Verified emergency blood donor matching across Delhi. Calm, fast, private." },
+      { property: "og:description", content: "Redstream Foundation connects patients in urgent need of blood with verified, nearby volunteer donors across Delhi. Fast, private, NGO-led." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Redstream" },
+      { name: "twitter:title", content: "Redstream Foundation — Emergency Blood Donors in Delhi" },
+      { name: "twitter:description", content: "Redstream Foundation connects patients in urgent need of blood with verified, nearby volunteer donors across Delhi. Fast, private, NGO-led." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/10a09c20-a9a1-41b7-b7bc-a4edecf6e56b" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/10a09c20-a9a1-41b7-b7bc-a4edecf6e56b" },
     ],
     links: [
       {
