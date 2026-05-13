@@ -4,6 +4,17 @@ import { StepShell } from "@/components/request/StepShell";
 
 export const Route = createFileRoute("/donor/thanks")({
   component: Thanks,
+  head: () => ({
+    meta: [
+      { title: "Thank you — Redstream Foundation" },
+      {
+        name: "description",
+        content:
+          "Your donation has been logged. View your cooldown period and next eligibility date with Redstream Foundation.",
+      },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
 });
 
 function Thanks() {
