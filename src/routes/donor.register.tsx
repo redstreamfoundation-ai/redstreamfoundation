@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { ChevronRight, User, Phone, MapPin, Briefcase, Calendar, Droplet, Check } from "lucide-react";
 import { PrimaryButton, StepShell } from "@/components/request/StepShell";
 import { useDonor } from "@/lib/donor-store";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/donor/register")({
   component: DonorRegister,
@@ -34,8 +36,34 @@ const GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 function DonorRegister() {
   const { state, update } = useDonor();
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const [otpSent, setOtpSent] = useState(false);
   const [seconds, setSeconds] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      navigate({ to: "/auth", search: { redirect: "/donor/register" }, replace: true });
+      return;
+    }
+    (async () => {
+      const { data } = await supabase.from("donors").select("*").eq("user_id", user.id).maybeSingle();
+      if (data) {
+        update({
+          fullName: data.full_name,
+          phone: data.phone,
+          otpVerified: true,
+          bloodGroup: data.blood_group,
+          locality: data.locality,
+          pincode: data.pincode,
+          profession: data.profession ?? "",
+          lastDonation: data.last_donation_date ?? "",
+        });
+      }
+    })();
+  }, [user, loading, navigate, update]);
 
   useEffect(() => {
     if (!otpSent || seconds <= 0) return;
@@ -61,6 +89,31 @@ function DonorRegister() {
     state.locality.trim() &&
     state.pincode.length === 6;
 
+  const saveAndContinue = async () => {
+    if (!user) return;
+    setSaving(true);
+    setError(null);
+    const { error } = await supabase.from("donors").upsert(
+      {
+        user_id: user.id,
+        full_name: state.fullName,
+        phone: state.phone,
+        blood_group: state.bloodGroup,
+        locality: state.locality,
+        pincode: state.pincode,
+        profession: state.profession || null,
+        last_donation_date: state.lastDonation || null,
+      },
+      { onConflict: "user_id" },
+    );
+    setSaving(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    navigate({ to: "/donor/availability" });
+  };
+
   return (
     <StepShell
       eyebrow="Donor registration"
@@ -68,13 +121,18 @@ function DonorRegister() {
       subtitle="A quick one-time setup. You can edit anything later from your dashboard."
       footer={
         <PrimaryButton
-          disabled={!valid}
-          onClick={() => navigate({ to: "/donor/availability" })}
+          disabled={!valid || saving}
+          onClick={saveAndContinue}
         >
-          Continue to availability <ChevronRight className="h-4 w-4" />
+          {saving ? "Saving…" : "Continue to availability"} <ChevronRight className="h-4 w-4" />
         </PrimaryButton>
       }
     >
+      {error ? (
+        <div className="mb-4 rounded-2xl border border-primary/30 bg-primary/5 p-3 text-xs text-foreground">
+          {error}
+        </div>
+      ) : null}
       <Section title="Identity">
         <Field
           icon={User}
