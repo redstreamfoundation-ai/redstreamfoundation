@@ -28,7 +28,7 @@ export function StepShell({
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-2xl items-center justify-between px-5 py-3.5">
+        <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-3.5 lg:max-w-5xl">
           {showBack ? (
             <button
               onClick={() => router.history.back()}
@@ -49,7 +49,7 @@ export function StepShell({
           </a>
         </div>
         {step ? (
-          <div className="mx-auto max-w-2xl px-5 pb-3">
+          <div className="mx-auto max-w-3xl px-5 pb-3 lg:max-w-5xl">
             <div className="flex items-center gap-2">
               {Array.from({ length: total }).map((_, i) => (
                 <div
@@ -67,7 +67,7 @@ export function StepShell({
         ) : null}
       </header>
 
-      <main className="mx-auto max-w-2xl px-5 pb-32 pt-8">
+      <main className="mx-auto max-w-3xl px-5 pb-32 pt-8 lg:max-w-5xl lg:pt-14">
         {eyebrow ? (
           <span className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
             {eyebrow}
@@ -86,7 +86,7 @@ export function StepShell({
 
       {footer ? (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur-md">
-          <div className="mx-auto max-w-2xl px-5 py-4">{footer}</div>
+          <div className="mx-auto max-w-3xl px-5 py-4 lg:max-w-5xl">{footer}</div>
         </div>
       ) : null}
     </div>
