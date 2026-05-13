@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, MapPin, Radio, Droplet } from "lucide-react";
+import { Check, MapPin, Radio, Droplet, Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type Event = {
@@ -35,6 +35,15 @@ function ago(ms: number): string {
 
 export function LiveActivityFeed() {
   const [events, setEvents] = useState<Event[]>(FALLBACK);
+  const [pulse, setPulse] = useState(0);
+
+  const pushEvent = (ev: Event) => {
+    setEvents((prev) => {
+      const filtered = prev.filter((p) => p.id !== ev.id);
+      return [ev, ...filtered].slice(0, 8);
+    });
+    setPulse((p) => p + 1);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -75,7 +84,7 @@ export function LiveActivityFeed() {
         });
       }
       merged.sort((a, b) => b.at - a.at);
-      if (merged.length) setEvents(merged.slice(0, 6));
+      if (merged.length) setEvents(merged.slice(0, 8));
     })();
 
     const channel = supabase
@@ -119,12 +128,34 @@ export function LiveActivityFeed() {
             .eq("id", m.request_id)
             .maybeSingle();
           if (!req) return;
-          setEvents((prev) =>
-            [
-              { id: `m-${m.id}`, kind: "matched" as const, group: req.blood_group, zone: req.locality, at: Date.now() },
-              ...prev,
-            ].slice(0, 6),
-          );
+          pushEvent({
+            id: `m-${m.id}`,
+            kind: "matched",
+            group: req.blood_group,
+            zone: req.locality,
+            at: Date.now(),
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "request_matches" },
+        async (payload) => {
+          const m = payload.new as { id: string; request_id: string; decision: string };
+          if (m.decision !== "accepted") return;
+          const { data: req } = await supabase
+            .from("blood_requests")
+            .select("blood_group, locality")
+            .eq("id", m.request_id)
+            .maybeSingle();
+          if (!req) return;
+          pushEvent({
+            id: `m-${m.id}`,
+            kind: "matched",
+            group: req.blood_group,
+            zone: req.locality,
+            at: Date.now(),
+          });
         },
       )
       .subscribe();
@@ -137,31 +168,49 @@ export function LiveActivityFeed() {
 
   return (
     <section aria-label="Live activity" className="bg-secondary/60 px-5 py-16 md:py-24">
-      <div className="mx-auto max-w-3xl">
-        <div className="mb-8 flex items-end justify-between gap-4">
-          <div>
-            <span className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Live across Delhi</span>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-10 grid items-end gap-6 md:mb-14 md:grid-cols-12">
+          <div className="md:col-span-8">
+            <span className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
+              Live across Delhi
+            </span>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight text-foreground md:text-5xl">
               Real coordination, in real time.
             </h2>
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
+              New emergency requests, donor matches and fulfilled cases stream in
+              from our coordination database the moment they happen.
+            </p>
           </div>
-          <span className="hidden items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground sm:inline-flex">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-70 animate-pulse-ring" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+          <div className="flex items-center gap-3 md:col-span-4 md:justify-end">
+            <span className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-70 animate-pulse-ring" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+              </span>
+              Live feed
             </span>
-            Live
-          </span>
+            <span
+              key={pulse}
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary animate-slide-up"
+            >
+              <Activity className="h-3 w-3" />
+              {events.length} recent events
+            </span>
+          </div>
         </div>
 
         <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-[var(--shadow-elevated)]">
-          <ul className="divide-y divide-border">
+          <ul className="grid divide-y divide-border lg:grid-cols-2 lg:divide-y-0 lg:divide-x">
             {events.map((e) => {
               const m = META[e.kind];
               const Icon = m.icon;
               return (
-                <li key={e.id} className="flex items-center gap-4 px-5 py-4 animate-slide-up">
-                  <span className={`grid h-9 w-9 place-items-center rounded-xl ${m.tone}`}>
+                <li
+                  key={e.id}
+                  className="flex items-center gap-4 px-5 py-4 animate-slide-up lg:[&:nth-child(n+3)]:border-t lg:[&:nth-child(n+3)]:border-border"
+                >
+                  <span className={`grid h-10 w-10 place-items-center rounded-xl ${m.tone}`}>
                     <Icon className="h-4 w-4" />
                   </span>
                   <div className="min-w-0 flex-1">
@@ -183,7 +232,7 @@ export function LiveActivityFeed() {
           </ul>
         </div>
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          Updates stream from the live coordination database.
+          Updates stream from the live coordination database via Supabase Realtime.
         </p>
       </div>
     </section>
