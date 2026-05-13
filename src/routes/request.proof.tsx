@@ -23,15 +23,16 @@ function ProofStep() {
   return (
     <StepShell
       step={3}
+      total={4}
       eyebrow="Proof of request"
       title="Upload a hospital document"
       subtitle="A blood requisition slip, doctor's note, or patient admission slip works."
       footer={
         <PrimaryButton
           disabled={!state.proofUploaded}
-          onClick={() => navigate({ to: "/request/verifying" })}
+          onClick={() => navigate({ to: "/request/review" })}
         >
-          Submit for verification <ChevronRight className="h-4 w-4" />
+          Continue to review <ChevronRight className="h-4 w-4" />
         </PrimaryButton>
       }
     >
