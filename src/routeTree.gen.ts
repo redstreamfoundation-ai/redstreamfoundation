@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RequestRouteImport } from './routes/request'
 import { Route as DonorRouteImport } from './routes/donor'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -38,11 +37,6 @@ import { Route as AdminMatchingRouteImport } from './routes/admin.matching'
 import { Route as AdminDonorsRouteImport } from './routes/admin.donors'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const RequestRoute = RequestRouteImport.update({
   id: '/request',
   path: '/request',
@@ -185,7 +179,6 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/donor': typeof DonorRouteWithChildren
   '/request': typeof RequestRouteWithChildren
-  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/donors': typeof AdminDonorsRoute
   '/admin/matching': typeof AdminMatchingRoute
@@ -212,7 +205,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/donors': typeof AdminDonorsRoute
   '/admin/matching': typeof AdminMatchingRoute
@@ -243,7 +235,6 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/donor': typeof DonorRouteWithChildren
   '/request': typeof RequestRouteWithChildren
-  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/donors': typeof AdminDonorsRoute
   '/admin/matching': typeof AdminMatchingRoute
@@ -275,7 +266,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/donor'
     | '/request'
-    | '/sitemap.xml'
     | '/admin/analytics'
     | '/admin/donors'
     | '/admin/matching'
@@ -302,7 +292,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
-    | '/sitemap.xml'
     | '/admin/analytics'
     | '/admin/donors'
     | '/admin/matching'
@@ -332,7 +321,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/donor'
     | '/request'
-    | '/sitemap.xml'
     | '/admin/analytics'
     | '/admin/donors'
     | '/admin/matching'
@@ -363,18 +351,10 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DonorRoute: typeof DonorRouteWithChildren
   RequestRoute: typeof RequestRouteWithChildren
-  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/request': {
       id: '/request'
       path: '/request'
@@ -642,18 +622,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   DonorRoute: DonorRouteWithChildren,
   RequestRoute: RequestRouteWithChildren,
-  SitemapDotxmlRoute: SitemapDotxmlRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
