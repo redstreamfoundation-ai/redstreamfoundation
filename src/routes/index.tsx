@@ -15,6 +15,24 @@ import { ImpactStories } from "@/components/landing/ImpactStories";
 
 export const Route = createFileRoute("/")({
   component: Index,
+  head: () => ({
+    meta: [
+      { title: "Redstream Foundation — Emergency Blood Donors in Delhi NCR" },
+      {
+        name: "description",
+        content:
+          "Redstream Foundation is a Delhi non-profit that coordinates verified emergency blood donations 24/7 by matching patients with nearby volunteer donors.",
+      },
+      { property: "og:title", content: "Redstream Foundation — Emergency Blood Donors in Delhi NCR" },
+      {
+        property: "og:description",
+        content:
+          "Verified, NGO-led emergency blood coordination across Delhi NCR. Request blood or join the donor network.",
+      },
+      { property: "og:url", content: "https://redstreamfoundation.lovable.app/" },
+    ],
+    links: [{ rel: "canonical", href: "https://redstreamfoundation.lovable.app/" }],
+  }),
 });
 
 function Index() {
