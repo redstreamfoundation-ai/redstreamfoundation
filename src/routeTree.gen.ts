@@ -19,6 +19,7 @@ import { Route as RequestHospitalRouteImport } from './routes/request.hospital'
 import { Route as RequestConfirmedRouteImport } from './routes/request.confirmed'
 import { Route as RequestCompletedRouteImport } from './routes/request.completed'
 import { Route as RequestBloodRouteImport } from './routes/request.blood'
+import { Route as DonorThanksRouteImport } from './routes/donor.thanks'
 import { Route as DonorRequestRouteImport } from './routes/donor.request'
 import { Route as DonorRegisterRouteImport } from './routes/donor.register'
 import { Route as DonorDashboardRouteImport } from './routes/donor.dashboard'
@@ -75,6 +76,11 @@ const RequestBloodRoute = RequestBloodRouteImport.update({
   path: '/blood',
   getParentRoute: () => RequestRoute,
 } as any)
+const DonorThanksRoute = DonorThanksRouteImport.update({
+  id: '/donor/thanks',
+  path: '/donor/thanks',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DonorRequestRoute = DonorRequestRouteImport.update({
   id: '/donor/request',
   path: '/donor/request',
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/donor/dashboard': typeof DonorDashboardRoute
   '/donor/register': typeof DonorRegisterRoute
   '/donor/request': typeof DonorRequestRoute
+  '/donor/thanks': typeof DonorThanksRoute
   '/request/blood': typeof RequestBloodRoute
   '/request/completed': typeof RequestCompletedRoute
   '/request/confirmed': typeof RequestConfirmedRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/donor/dashboard': typeof DonorDashboardRoute
   '/donor/register': typeof DonorRegisterRoute
   '/donor/request': typeof DonorRequestRoute
+  '/donor/thanks': typeof DonorThanksRoute
   '/request/blood': typeof RequestBloodRoute
   '/request/completed': typeof RequestCompletedRoute
   '/request/confirmed': typeof RequestConfirmedRoute
@@ -144,6 +152,7 @@ export interface FileRoutesById {
   '/donor/dashboard': typeof DonorDashboardRoute
   '/donor/register': typeof DonorRegisterRoute
   '/donor/request': typeof DonorRequestRoute
+  '/donor/thanks': typeof DonorThanksRoute
   '/request/blood': typeof RequestBloodRoute
   '/request/completed': typeof RequestCompletedRoute
   '/request/confirmed': typeof RequestConfirmedRoute
@@ -163,6 +172,7 @@ export interface FileRouteTypes {
     | '/donor/dashboard'
     | '/donor/register'
     | '/donor/request'
+    | '/donor/thanks'
     | '/request/blood'
     | '/request/completed'
     | '/request/confirmed'
@@ -180,6 +190,7 @@ export interface FileRouteTypes {
     | '/donor/dashboard'
     | '/donor/register'
     | '/donor/request'
+    | '/donor/thanks'
     | '/request/blood'
     | '/request/completed'
     | '/request/confirmed'
@@ -197,6 +208,7 @@ export interface FileRouteTypes {
     | '/donor/dashboard'
     | '/donor/register'
     | '/donor/request'
+    | '/donor/thanks'
     | '/request/blood'
     | '/request/completed'
     | '/request/confirmed'
@@ -215,6 +227,7 @@ export interface RootRouteChildren {
   DonorDashboardRoute: typeof DonorDashboardRoute
   DonorRegisterRoute: typeof DonorRegisterRoute
   DonorRequestRoute: typeof DonorRequestRoute
+  DonorThanksRoute: typeof DonorThanksRoute
   DonorIndexRoute: typeof DonorIndexRoute
 }
 
@@ -290,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RequestBloodRouteImport
       parentRoute: typeof RequestRoute
     }
+    '/donor/thanks': {
+      id: '/donor/thanks'
+      path: '/donor/thanks'
+      fullPath: '/donor/thanks'
+      preLoaderRoute: typeof DonorThanksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/donor/request': {
       id: '/donor/request'
       path: '/donor/request'
@@ -359,6 +379,7 @@ const rootRouteChildren: RootRouteChildren = {
   DonorDashboardRoute: DonorDashboardRoute,
   DonorRegisterRoute: DonorRegisterRoute,
   DonorRequestRoute: DonorRequestRoute,
+  DonorThanksRoute: DonorThanksRoute,
   DonorIndexRoute: DonorIndexRoute,
 }
 export const routeTree = rootRouteImport
