@@ -19,6 +19,7 @@ import { Route as RequestHospitalRouteImport } from './routes/request.hospital'
 import { Route as RequestConfirmedRouteImport } from './routes/request.confirmed'
 import { Route as RequestCompletedRouteImport } from './routes/request.completed'
 import { Route as RequestBloodRouteImport } from './routes/request.blood'
+import { Route as DonorRegisterRouteImport } from './routes/donor.register'
 
 const RequestRoute = RequestRouteImport.update({
   id: '/request',
@@ -70,10 +71,16 @@ const RequestBloodRoute = RequestBloodRouteImport.update({
   path: '/blood',
   getParentRoute: () => RequestRoute,
 } as any)
+const DonorRegisterRoute = DonorRegisterRouteImport.update({
+  id: '/donor/register',
+  path: '/donor/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/request': typeof RequestRouteWithChildren
+  '/donor/register': typeof DonorRegisterRoute
   '/request/blood': typeof RequestBloodRoute
   '/request/completed': typeof RequestCompletedRoute
   '/request/confirmed': typeof RequestConfirmedRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/request': typeof RequestRouteWithChildren
+  '/donor/register': typeof DonorRegisterRoute
   '/request/blood': typeof RequestBloodRoute
   '/request/completed': typeof RequestCompletedRoute
   '/request/confirmed': typeof RequestConfirmedRoute
@@ -99,6 +107,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/request': typeof RequestRouteWithChildren
+  '/donor/register': typeof DonorRegisterRoute
   '/request/blood': typeof RequestBloodRoute
   '/request/completed': typeof RequestCompletedRoute
   '/request/confirmed': typeof RequestConfirmedRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/request'
+    | '/donor/register'
     | '/request/blood'
     | '/request/completed'
     | '/request/confirmed'
@@ -125,6 +135,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/request'
+    | '/donor/register'
     | '/request/blood'
     | '/request/completed'
     | '/request/confirmed'
@@ -137,6 +148,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/request'
+    | '/donor/register'
     | '/request/blood'
     | '/request/completed'
     | '/request/confirmed'
@@ -150,6 +162,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RequestRoute: typeof RequestRouteWithChildren
+  DonorRegisterRoute: typeof DonorRegisterRoute
   DonorIndexRoute: typeof DonorIndexRoute
 }
 
@@ -225,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RequestBloodRouteImport
       parentRoute: typeof RequestRoute
     }
+    '/donor/register': {
+      id: '/donor/register'
+      path: '/donor/register'
+      fullPath: '/donor/register'
+      preLoaderRoute: typeof DonorRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -254,6 +274,7 @@ const RequestRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RequestRoute: RequestRouteWithChildren,
+  DonorRegisterRoute: DonorRegisterRoute,
   DonorIndexRoute: DonorIndexRoute,
 }
 export const routeTree = rootRouteImport
