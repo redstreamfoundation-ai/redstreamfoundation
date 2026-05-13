@@ -30,6 +30,7 @@ import { Route as DonorCoordinateRouteImport } from './routes/donor.coordinate'
 import { Route as DonorAvailabilityRouteImport } from './routes/donor.availability'
 import { Route as AdminRequestsRouteImport } from './routes/admin.requests'
 import { Route as AdminMatchingRouteImport } from './routes/admin.matching'
+import { Route as AdminDonorsRouteImport } from './routes/admin.donors'
 
 const RequestRoute = RequestRouteImport.update({
   id: '/request',
@@ -136,12 +137,18 @@ const AdminMatchingRoute = AdminMatchingRouteImport.update({
   path: '/matching',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminDonorsRoute = AdminDonorsRouteImport.update({
+  id: '/donors',
+  path: '/donors',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/donor': typeof DonorRouteWithChildren
   '/request': typeof RequestRouteWithChildren
+  '/admin/donors': typeof AdminDonorsRoute
   '/admin/matching': typeof AdminMatchingRoute
   '/admin/requests': typeof AdminRequestsRoute
   '/donor/availability': typeof DonorAvailabilityRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/request': typeof RequestRouteWithChildren
+  '/admin/donors': typeof AdminDonorsRoute
   '/admin/matching': typeof AdminMatchingRoute
   '/admin/requests': typeof AdminRequestsRoute
   '/donor/availability': typeof DonorAvailabilityRoute
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/donor': typeof DonorRouteWithChildren
   '/request': typeof RequestRouteWithChildren
+  '/admin/donors': typeof AdminDonorsRoute
   '/admin/matching': typeof AdminMatchingRoute
   '/admin/requests': typeof AdminRequestsRoute
   '/donor/availability': typeof DonorAvailabilityRoute
@@ -212,6 +221,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/donor'
     | '/request'
+    | '/admin/donors'
     | '/admin/matching'
     | '/admin/requests'
     | '/donor/availability'
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/request'
+    | '/admin/donors'
     | '/admin/matching'
     | '/admin/requests'
     | '/donor/availability'
@@ -256,6 +267,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/donor'
     | '/request'
+    | '/admin/donors'
     | '/admin/matching'
     | '/admin/requests'
     | '/donor/availability'
@@ -431,16 +443,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMatchingRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/donors': {
+      id: '/admin/donors'
+      path: '/donors'
+      fullPath: '/admin/donors'
+      preLoaderRoute: typeof AdminDonorsRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminDonorsRoute: typeof AdminDonorsRoute
   AdminMatchingRoute: typeof AdminMatchingRoute
   AdminRequestsRoute: typeof AdminRequestsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminDonorsRoute: AdminDonorsRoute,
   AdminMatchingRoute: AdminMatchingRoute,
   AdminRequestsRoute: AdminRequestsRoute,
   AdminIndexRoute: AdminIndexRoute,
