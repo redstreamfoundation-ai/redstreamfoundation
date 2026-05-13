@@ -2,6 +2,47 @@ import { createContext, useContext, useState, type ReactNode } from "react";
 
 export type Urgency = "critical" | "within-2h" | "within-24h" | "planned";
 
+export type RequestMode = {
+  id: "critical" | "urgent" | "scheduled";
+  label: string;
+  window: string;
+  tone: "critical" | "urgent" | "calm";
+  description: string;
+};
+
+export const REQUEST_MODES: RequestMode[] = [
+  {
+    id: "critical",
+    label: "Critical emergency",
+    window: "Within 1–2 hours",
+    tone: "critical",
+    description:
+      "Aggressive matching, live coordination, expanding donor radius and emergency escalation.",
+  },
+  {
+    id: "urgent",
+    label: "Same-day urgent",
+    window: "Within 24 hours",
+    tone: "urgent",
+    description:
+      "Active donor outreach with scheduled confirmations and moderate urgency notifications.",
+  },
+  {
+    id: "scheduled",
+    label: "Scheduled requirement",
+    window: "1–3 days ahead",
+    tone: "calm",
+    description:
+      "Planned coordination — donors are matched and confirmed in advance for surgeries or recurring needs.",
+  },
+];
+
+export function modeForUrgency(u: Urgency | ""): RequestMode {
+  if (u === "critical" || u === "within-2h") return REQUEST_MODES[0];
+  if (u === "within-24h") return REQUEST_MODES[1];
+  return REQUEST_MODES[2];
+}
+
 export type RequestState = {
   bloodGroup: string;
   component: string;

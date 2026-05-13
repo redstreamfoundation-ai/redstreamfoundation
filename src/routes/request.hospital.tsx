@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronRight, Building2, MapPin, User, Phone } from "lucide-react";
 import { PrimaryButton, StepShell } from "@/components/request/StepShell";
+import { Combobox } from "@/components/request/Combobox";
+import { DELHI_HOSPITALS, DELHI_LOCALITIES } from "@/lib/delhi-data";
 import { useRequest } from "@/lib/request-store";
 
 export const Route = createFileRoute("/request/hospital")({
@@ -33,19 +35,23 @@ function HospitalStep() {
       }
     >
       <div className="space-y-4">
-        <Field
+        <Combobox
           icon={Building2}
           label="Hospital name"
-          placeholder="e.g. AIIMS, Sir Ganga Ram, Apollo"
+          placeholder="Search hospitals — e.g. Ganga Ram, AIIMS, Apollo"
           value={state.hospital}
           onChange={(v) => update({ hospital: v })}
+          options={DELHI_HOSPITALS}
+          emptyHint="Hospital not listed — we'll still accept what you typed"
         />
-        <Field
+        <Combobox
           icon={MapPin}
           label="Locality / area"
-          placeholder="e.g. Saket, Karol Bagh, Dwarka Sector 10"
+          placeholder="Search locality — e.g. Dwarka, Saket, Noida 62"
           value={state.locality}
           onChange={(v) => update({ locality: v })}
+          options={DELHI_LOCALITIES}
+          emptyHint="Locality not listed — type what works"
         />
         <div className="grid grid-cols-2 gap-3">
           <Field

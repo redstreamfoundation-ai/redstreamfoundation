@@ -1,6 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ShieldCheck, MapPin, Lock, ArrowRight, Phone, HeartPulse } from "lucide-react";
+import { ShieldCheck, MapPin, Lock, ArrowRight, Phone, HeartPulse, Zap, Clock, Calendar } from "lucide-react";
 import { StepShell } from "@/components/request/StepShell";
+import { REQUEST_MODES } from "@/lib/request-store";
+
+const MODE_ICON = { critical: Zap, urgent: Clock, calm: Calendar } as const;
 
 export const Route = createFileRoute("/request/")({
   component: EmergencyIntro,
@@ -67,6 +70,47 @@ function EmergencyIntro() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="mt-8">
+        <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+          Choose how soon blood is needed
+        </div>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+          The next step lets you pick the timeline. Each mode triggers a different coordination protocol.
+        </p>
+        <div className="mt-3 grid gap-2.5 sm:grid-cols-3">
+          {REQUEST_MODES.map((m) => {
+            const Icon = MODE_ICON[m.tone];
+            return (
+              <div
+                key={m.id}
+                className="rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-soft)]"
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`grid h-8 w-8 place-items-center rounded-lg ${
+                      m.tone === "critical"
+                        ? "bg-primary text-primary-foreground"
+                        : m.tone === "urgent"
+                        ? "bg-amber-500/15 text-amber-700"
+                        : "bg-emerald-500/10 text-emerald-700"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span className="text-sm font-semibold text-foreground">{m.label}</span>
+                </div>
+                <div className="mt-1 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                  {m.window}
+                </div>
+                <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                  {m.description}
+                </p>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="mt-6 rounded-2xl border border-primary/20 bg-[var(--gradient-soft)] p-5">
