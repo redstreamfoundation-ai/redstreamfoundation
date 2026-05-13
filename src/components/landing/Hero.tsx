@@ -1,4 +1,5 @@
 import { ArrowRight, HeartPulse } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { LiveBadge } from "./LiveBadge";
 
@@ -38,14 +39,14 @@ export function Hero() {
           </p>
 
           <div className="flex w-full flex-col gap-3 pt-2 sm:flex-row md:w-auto md:justify-center">
-            <a
-              href="#request"
+            <Link
+              to="/request"
               className="group inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground shadow-[var(--shadow-glow)] transition-all hover:bg-[var(--primary-deep)]"
             >
               <HeartPulse className="h-4 w-4" />
               Request blood
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </a>
+            </Link>
             <a
               href="#donor"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-background px-6 py-3.5 text-sm font-medium text-foreground shadow-[var(--shadow-soft)] transition-colors hover:bg-secondary"

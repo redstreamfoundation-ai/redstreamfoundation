@@ -9,38 +9,146 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RequestRouteImport } from './routes/request'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RequestVerifyingRouteImport } from './routes/request.verifying'
+import { Route as RequestProofRouteImport } from './routes/request.proof'
+import { Route as RequestMatchingRouteImport } from './routes/request.matching'
+import { Route as RequestHospitalRouteImport } from './routes/request.hospital'
+import { Route as RequestConfirmedRouteImport } from './routes/request.confirmed'
+import { Route as RequestCompletedRouteImport } from './routes/request.completed'
+import { Route as RequestBloodRouteImport } from './routes/request.blood'
 
+const RequestRoute = RequestRouteImport.update({
+  id: '/request',
+  path: '/request',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RequestVerifyingRoute = RequestVerifyingRouteImport.update({
+  id: '/verifying',
+  path: '/verifying',
+  getParentRoute: () => RequestRoute,
+} as any)
+const RequestProofRoute = RequestProofRouteImport.update({
+  id: '/proof',
+  path: '/proof',
+  getParentRoute: () => RequestRoute,
+} as any)
+const RequestMatchingRoute = RequestMatchingRouteImport.update({
+  id: '/matching',
+  path: '/matching',
+  getParentRoute: () => RequestRoute,
+} as any)
+const RequestHospitalRoute = RequestHospitalRouteImport.update({
+  id: '/hospital',
+  path: '/hospital',
+  getParentRoute: () => RequestRoute,
+} as any)
+const RequestConfirmedRoute = RequestConfirmedRouteImport.update({
+  id: '/confirmed',
+  path: '/confirmed',
+  getParentRoute: () => RequestRoute,
+} as any)
+const RequestCompletedRoute = RequestCompletedRouteImport.update({
+  id: '/completed',
+  path: '/completed',
+  getParentRoute: () => RequestRoute,
+} as any)
+const RequestBloodRoute = RequestBloodRouteImport.update({
+  id: '/blood',
+  path: '/blood',
+  getParentRoute: () => RequestRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/request': typeof RequestRouteWithChildren
+  '/request/blood': typeof RequestBloodRoute
+  '/request/completed': typeof RequestCompletedRoute
+  '/request/confirmed': typeof RequestConfirmedRoute
+  '/request/hospital': typeof RequestHospitalRoute
+  '/request/matching': typeof RequestMatchingRoute
+  '/request/proof': typeof RequestProofRoute
+  '/request/verifying': typeof RequestVerifyingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/request': typeof RequestRouteWithChildren
+  '/request/blood': typeof RequestBloodRoute
+  '/request/completed': typeof RequestCompletedRoute
+  '/request/confirmed': typeof RequestConfirmedRoute
+  '/request/hospital': typeof RequestHospitalRoute
+  '/request/matching': typeof RequestMatchingRoute
+  '/request/proof': typeof RequestProofRoute
+  '/request/verifying': typeof RequestVerifyingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/request': typeof RequestRouteWithChildren
+  '/request/blood': typeof RequestBloodRoute
+  '/request/completed': typeof RequestCompletedRoute
+  '/request/confirmed': typeof RequestConfirmedRoute
+  '/request/hospital': typeof RequestHospitalRoute
+  '/request/matching': typeof RequestMatchingRoute
+  '/request/proof': typeof RequestProofRoute
+  '/request/verifying': typeof RequestVerifyingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/request'
+    | '/request/blood'
+    | '/request/completed'
+    | '/request/confirmed'
+    | '/request/hospital'
+    | '/request/matching'
+    | '/request/proof'
+    | '/request/verifying'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/request'
+    | '/request/blood'
+    | '/request/completed'
+    | '/request/confirmed'
+    | '/request/hospital'
+    | '/request/matching'
+    | '/request/proof'
+    | '/request/verifying'
+  id:
+    | '__root__'
+    | '/'
+    | '/request'
+    | '/request/blood'
+    | '/request/completed'
+    | '/request/confirmed'
+    | '/request/hospital'
+    | '/request/matching'
+    | '/request/proof'
+    | '/request/verifying'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  RequestRoute: typeof RequestRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/request': {
+      id: '/request'
+      path: '/request'
+      fullPath: '/request'
+      preLoaderRoute: typeof RequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +156,84 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/request/verifying': {
+      id: '/request/verifying'
+      path: '/verifying'
+      fullPath: '/request/verifying'
+      preLoaderRoute: typeof RequestVerifyingRouteImport
+      parentRoute: typeof RequestRoute
+    }
+    '/request/proof': {
+      id: '/request/proof'
+      path: '/proof'
+      fullPath: '/request/proof'
+      preLoaderRoute: typeof RequestProofRouteImport
+      parentRoute: typeof RequestRoute
+    }
+    '/request/matching': {
+      id: '/request/matching'
+      path: '/matching'
+      fullPath: '/request/matching'
+      preLoaderRoute: typeof RequestMatchingRouteImport
+      parentRoute: typeof RequestRoute
+    }
+    '/request/hospital': {
+      id: '/request/hospital'
+      path: '/hospital'
+      fullPath: '/request/hospital'
+      preLoaderRoute: typeof RequestHospitalRouteImport
+      parentRoute: typeof RequestRoute
+    }
+    '/request/confirmed': {
+      id: '/request/confirmed'
+      path: '/confirmed'
+      fullPath: '/request/confirmed'
+      preLoaderRoute: typeof RequestConfirmedRouteImport
+      parentRoute: typeof RequestRoute
+    }
+    '/request/completed': {
+      id: '/request/completed'
+      path: '/completed'
+      fullPath: '/request/completed'
+      preLoaderRoute: typeof RequestCompletedRouteImport
+      parentRoute: typeof RequestRoute
+    }
+    '/request/blood': {
+      id: '/request/blood'
+      path: '/blood'
+      fullPath: '/request/blood'
+      preLoaderRoute: typeof RequestBloodRouteImport
+      parentRoute: typeof RequestRoute
+    }
   }
 }
 
+interface RequestRouteChildren {
+  RequestBloodRoute: typeof RequestBloodRoute
+  RequestCompletedRoute: typeof RequestCompletedRoute
+  RequestConfirmedRoute: typeof RequestConfirmedRoute
+  RequestHospitalRoute: typeof RequestHospitalRoute
+  RequestMatchingRoute: typeof RequestMatchingRoute
+  RequestProofRoute: typeof RequestProofRoute
+  RequestVerifyingRoute: typeof RequestVerifyingRoute
+}
+
+const RequestRouteChildren: RequestRouteChildren = {
+  RequestBloodRoute: RequestBloodRoute,
+  RequestCompletedRoute: RequestCompletedRoute,
+  RequestConfirmedRoute: RequestConfirmedRoute,
+  RequestHospitalRoute: RequestHospitalRoute,
+  RequestMatchingRoute: RequestMatchingRoute,
+  RequestProofRoute: RequestProofRoute,
+  RequestVerifyingRoute: RequestVerifyingRoute,
+}
+
+const RequestRouteWithChildren =
+  RequestRoute._addFileChildren(RequestRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  RequestRoute: RequestRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

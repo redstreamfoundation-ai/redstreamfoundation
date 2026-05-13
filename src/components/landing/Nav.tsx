@@ -1,4 +1,5 @@
 import { Logo } from "./Logo";
+import { Link } from "@tanstack/react-router";
 
 export function Nav() {
   return (
@@ -10,12 +11,12 @@ export function Nav() {
           <a href="#why" className="transition-colors hover:text-foreground">Why Redstream</a>
           <a href="#trust" className="transition-colors hover:text-foreground">Trust</a>
         </nav>
-        <a
-          href="#request"
+        <Link
+          to="/request"
           className="inline-flex items-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-[var(--shadow-glow)] transition-transform hover:scale-[1.02]"
         >
           Request blood
-        </a>
+        </Link>
       </div>
     </header>
   );
