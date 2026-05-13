@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RequestRouteImport } from './routes/request'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DonorIndexRouteImport } from './routes/donor.index'
 import { Route as RequestVerifyingRouteImport } from './routes/request.verifying'
 import { Route as RequestProofRouteImport } from './routes/request.proof'
 import { Route as RequestMatchingRouteImport } from './routes/request.matching'
@@ -27,6 +28,11 @@ const RequestRoute = RequestRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DonorIndexRoute = DonorIndexRouteImport.update({
+  id: '/donor/',
+  path: '/donor/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RequestVerifyingRoute = RequestVerifyingRouteImport.update({
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/request/matching': typeof RequestMatchingRoute
   '/request/proof': typeof RequestProofRoute
   '/request/verifying': typeof RequestVerifyingRoute
+  '/donor/': typeof DonorIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/request/matching': typeof RequestMatchingRoute
   '/request/proof': typeof RequestProofRoute
   '/request/verifying': typeof RequestVerifyingRoute
+  '/donor': typeof DonorIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/request/matching': typeof RequestMatchingRoute
   '/request/proof': typeof RequestProofRoute
   '/request/verifying': typeof RequestVerifyingRoute
+  '/donor/': typeof DonorIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/request/matching'
     | '/request/proof'
     | '/request/verifying'
+    | '/donor/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/request/matching'
     | '/request/proof'
     | '/request/verifying'
+    | '/donor'
   id:
     | '__root__'
     | '/'
@@ -133,11 +144,13 @@ export interface FileRouteTypes {
     | '/request/matching'
     | '/request/proof'
     | '/request/verifying'
+    | '/donor/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RequestRoute: typeof RequestRouteWithChildren
+  DonorIndexRoute: typeof DonorIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -154,6 +167,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/donor/': {
+      id: '/donor/'
+      path: '/donor'
+      fullPath: '/donor/'
+      preLoaderRoute: typeof DonorIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/request/verifying': {
@@ -234,7 +254,18 @@ const RequestRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RequestRoute: RequestRouteWithChildren,
+  DonorIndexRoute: DonorIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
