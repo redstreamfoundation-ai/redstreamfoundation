@@ -47,12 +47,12 @@ export function Hero() {
               Request blood
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
-            <a
-              href="#donor"
+            <Link
+              to="/donor"
               className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-background px-6 py-3.5 text-sm font-medium text-foreground shadow-[var(--shadow-soft)] transition-colors hover:bg-secondary"
             >
               Become a donor
-            </a>
+            </Link>
           </div>
 
           <div className="mt-6 flex items-center gap-3 text-xs text-muted-foreground">
