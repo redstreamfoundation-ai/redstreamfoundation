@@ -4,7 +4,10 @@ export function EmergencyCTA() {
   return (
     <section aria-label="Emergency helpline" className="px-5 pb-16 md:pb-24">
       <div className="mx-auto max-w-6xl">
-        <div className="overflow-hidden rounded-3xl bg-[var(--gradient-emergency)] p-8 text-primary-foreground shadow-[var(--shadow-elevated)] md:p-12">
+        <div
+          className="overflow-hidden rounded-3xl p-8 text-primary-foreground shadow-[var(--shadow-elevated)] md:p-12"
+          style={{ backgroundImage: "var(--gradient-emergency)" }}
+        >
           <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
             <div className="max-w-xl">
               <span className="text-xs font-medium uppercase tracking-[0.2em] text-primary-foreground/80">
