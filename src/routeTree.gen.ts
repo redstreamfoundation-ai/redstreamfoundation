@@ -14,6 +14,7 @@ import { Route as DonorRouteImport } from './routes/donor'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DonorIndexRouteImport } from './routes/donor.index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as RequestVerifyingRouteImport } from './routes/request.verifying'
 import { Route as RequestProofRouteImport } from './routes/request.proof'
 import { Route as RequestMatchingRouteImport } from './routes/request.matching'
@@ -52,6 +53,11 @@ const DonorIndexRoute = DonorIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DonorRoute,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const RequestVerifyingRoute = RequestVerifyingRouteImport.update({
   id: '/verifying',
@@ -121,7 +127,7 @@ const DonorAvailabilityRoute = DonorAvailabilityRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/donor': typeof DonorRouteWithChildren
   '/request': typeof RequestRouteWithChildren
   '/donor/availability': typeof DonorAvailabilityRoute
@@ -137,11 +143,11 @@ export interface FileRoutesByFullPath {
   '/request/matching': typeof RequestMatchingRoute
   '/request/proof': typeof RequestProofRoute
   '/request/verifying': typeof RequestVerifyingRoute
+  '/admin/': typeof AdminIndexRoute
   '/donor/': typeof DonorIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
   '/request': typeof RequestRouteWithChildren
   '/donor/availability': typeof DonorAvailabilityRoute
   '/donor/coordinate': typeof DonorCoordinateRoute
@@ -156,12 +162,13 @@ export interface FileRoutesByTo {
   '/request/matching': typeof RequestMatchingRoute
   '/request/proof': typeof RequestProofRoute
   '/request/verifying': typeof RequestVerifyingRoute
+  '/admin': typeof AdminIndexRoute
   '/donor': typeof DonorIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/donor': typeof DonorRouteWithChildren
   '/request': typeof RequestRouteWithChildren
   '/donor/availability': typeof DonorAvailabilityRoute
@@ -177,6 +184,7 @@ export interface FileRoutesById {
   '/request/matching': typeof RequestMatchingRoute
   '/request/proof': typeof RequestProofRoute
   '/request/verifying': typeof RequestVerifyingRoute
+  '/admin/': typeof AdminIndexRoute
   '/donor/': typeof DonorIndexRoute
 }
 export interface FileRouteTypes {
@@ -199,11 +207,11 @@ export interface FileRouteTypes {
     | '/request/matching'
     | '/request/proof'
     | '/request/verifying'
+    | '/admin/'
     | '/donor/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/request'
     | '/donor/availability'
     | '/donor/coordinate'
@@ -218,6 +226,7 @@ export interface FileRouteTypes {
     | '/request/matching'
     | '/request/proof'
     | '/request/verifying'
+    | '/admin'
     | '/donor'
   id:
     | '__root__'
@@ -238,12 +247,13 @@ export interface FileRouteTypes {
     | '/request/matching'
     | '/request/proof'
     | '/request/verifying'
+    | '/admin/'
     | '/donor/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   DonorRoute: typeof DonorRouteWithChildren
   RequestRoute: typeof RequestRouteWithChildren
 }
@@ -284,6 +294,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/donor/'
       preLoaderRoute: typeof DonorIndexRouteImport
       parentRoute: typeof DonorRoute
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/request/verifying': {
       id: '/request/verifying'
@@ -379,6 +396,16 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface DonorRouteChildren {
   DonorAvailabilityRoute: typeof DonorAvailabilityRoute
   DonorCoordinateRoute: typeof DonorCoordinateRoute
@@ -426,7 +453,7 @@ const RequestRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   DonorRoute: DonorRouteWithChildren,
   RequestRoute: RequestRouteWithChildren,
 }
