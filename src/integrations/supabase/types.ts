@@ -14,16 +14,269 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      blood_requests: {
+        Row: {
+          attendant_name: string
+          attendant_phone: string
+          blood_group: string
+          component: string
+          created_at: string
+          created_by: string | null
+          hospital: string
+          id: string
+          locality: string
+          patient_age: string | null
+          proof_uploaded: boolean
+          status: Database["public"]["Enums"]["request_status"]
+          units: number
+          updated_at: string
+          urgency: Database["public"]["Enums"]["urgency_level"]
+        }
+        Insert: {
+          attendant_name: string
+          attendant_phone: string
+          blood_group: string
+          component?: string
+          created_at?: string
+          created_by?: string | null
+          hospital: string
+          id?: string
+          locality: string
+          patient_age?: string | null
+          proof_uploaded?: boolean
+          status?: Database["public"]["Enums"]["request_status"]
+          units?: number
+          updated_at?: string
+          urgency: Database["public"]["Enums"]["urgency_level"]
+        }
+        Update: {
+          attendant_name?: string
+          attendant_phone?: string
+          blood_group?: string
+          component?: string
+          created_at?: string
+          created_by?: string | null
+          hospital?: string
+          id?: string
+          locality?: string
+          patient_age?: string | null
+          proof_uploaded?: boolean
+          status?: Database["public"]["Enums"]["request_status"]
+          units?: number
+          updated_at?: string
+          urgency?: Database["public"]["Enums"]["urgency_level"]
+        }
+        Relationships: []
+      }
+      donor_availability: {
+        Row: {
+          active: boolean
+          emergency_only: boolean
+          id: string
+          notify_push: boolean
+          notify_sms: boolean
+          notify_whatsapp: boolean
+          quiet_hours: boolean
+          radius_km: number
+          slot_afternoon: boolean
+          slot_evening: boolean
+          slot_morning: boolean
+          slot_night: boolean
+          updated_at: string
+          user_id: string
+          weekdays: boolean
+          weekends: boolean
+        }
+        Insert: {
+          active?: boolean
+          emergency_only?: boolean
+          id?: string
+          notify_push?: boolean
+          notify_sms?: boolean
+          notify_whatsapp?: boolean
+          quiet_hours?: boolean
+          radius_km?: number
+          slot_afternoon?: boolean
+          slot_evening?: boolean
+          slot_morning?: boolean
+          slot_night?: boolean
+          updated_at?: string
+          user_id: string
+          weekdays?: boolean
+          weekends?: boolean
+        }
+        Update: {
+          active?: boolean
+          emergency_only?: boolean
+          id?: string
+          notify_push?: boolean
+          notify_sms?: boolean
+          notify_whatsapp?: boolean
+          quiet_hours?: boolean
+          radius_km?: number
+          slot_afternoon?: boolean
+          slot_evening?: boolean
+          slot_morning?: boolean
+          slot_night?: boolean
+          updated_at?: string
+          user_id?: string
+          weekdays?: boolean
+          weekends?: boolean
+        }
+        Relationships: []
+      }
+      donors: {
+        Row: {
+          blood_group: string
+          created_at: string
+          full_name: string
+          id: string
+          last_donation_date: string | null
+          locality: string
+          phone: string
+          pincode: string
+          profession: string | null
+          reliability_score: number
+          total_donations: number
+          updated_at: string
+          user_id: string
+          verified: boolean
+        }
+        Insert: {
+          blood_group: string
+          created_at?: string
+          full_name: string
+          id?: string
+          last_donation_date?: string | null
+          locality: string
+          phone: string
+          pincode: string
+          profession?: string | null
+          reliability_score?: number
+          total_donations?: number
+          updated_at?: string
+          user_id: string
+          verified?: boolean
+        }
+        Update: {
+          blood_group?: string
+          created_at?: string
+          full_name?: string
+          id?: string
+          last_donation_date?: string | null
+          locality?: string
+          phone?: string
+          pincode?: string
+          profession?: string | null
+          reliability_score?: number
+          total_donations?: number
+          updated_at?: string
+          user_id?: string
+          verified?: boolean
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      request_matches: {
+        Row: {
+          available_in_hours: number | null
+          created_at: string
+          decision: Database["public"]["Enums"]["match_decision"]
+          donor_user_id: string
+          id: string
+          request_id: string
+        }
+        Insert: {
+          available_in_hours?: number | null
+          created_at?: string
+          decision: Database["public"]["Enums"]["match_decision"]
+          donor_user_id: string
+          id?: string
+          request_id: string
+        }
+        Update: {
+          available_in_hours?: number | null
+          created_at?: string
+          decision?: Database["public"]["Enums"]["match_decision"]
+          donor_user_id?: string
+          id?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_matches_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "blood_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "donor" | "user"
+      match_decision: "accepted" | "declined" | "later"
+      request_status: "pending" | "matching" | "fulfilled" | "cancelled"
+      urgency_level: "critical" | "within-2h" | "within-24h" | "planned"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +403,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "donor", "user"],
+      match_decision: ["accepted", "declined", "later"],
+      request_status: ["pending", "matching", "fulfilled", "cancelled"],
+      urgency_level: ["critical", "within-2h", "within-24h", "planned"],
+    },
   },
 } as const
