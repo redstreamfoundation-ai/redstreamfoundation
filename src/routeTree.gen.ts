@@ -28,6 +28,8 @@ import { Route as DonorRegisterRouteImport } from './routes/donor.register'
 import { Route as DonorDashboardRouteImport } from './routes/donor.dashboard'
 import { Route as DonorCoordinateRouteImport } from './routes/donor.coordinate'
 import { Route as DonorAvailabilityRouteImport } from './routes/donor.availability'
+import { Route as AdminRequestsRouteImport } from './routes/admin.requests'
+import { Route as AdminMatchingRouteImport } from './routes/admin.matching'
 
 const RequestRoute = RequestRouteImport.update({
   id: '/request',
@@ -124,12 +126,24 @@ const DonorAvailabilityRoute = DonorAvailabilityRouteImport.update({
   path: '/availability',
   getParentRoute: () => DonorRoute,
 } as any)
+const AdminRequestsRoute = AdminRequestsRouteImport.update({
+  id: '/requests',
+  path: '/requests',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMatchingRoute = AdminMatchingRouteImport.update({
+  id: '/matching',
+  path: '/matching',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/donor': typeof DonorRouteWithChildren
   '/request': typeof RequestRouteWithChildren
+  '/admin/matching': typeof AdminMatchingRoute
+  '/admin/requests': typeof AdminRequestsRoute
   '/donor/availability': typeof DonorAvailabilityRoute
   '/donor/coordinate': typeof DonorCoordinateRoute
   '/donor/dashboard': typeof DonorDashboardRoute
@@ -149,6 +163,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/request': typeof RequestRouteWithChildren
+  '/admin/matching': typeof AdminMatchingRoute
+  '/admin/requests': typeof AdminRequestsRoute
   '/donor/availability': typeof DonorAvailabilityRoute
   '/donor/coordinate': typeof DonorCoordinateRoute
   '/donor/dashboard': typeof DonorDashboardRoute
@@ -171,6 +187,8 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/donor': typeof DonorRouteWithChildren
   '/request': typeof RequestRouteWithChildren
+  '/admin/matching': typeof AdminMatchingRoute
+  '/admin/requests': typeof AdminRequestsRoute
   '/donor/availability': typeof DonorAvailabilityRoute
   '/donor/coordinate': typeof DonorCoordinateRoute
   '/donor/dashboard': typeof DonorDashboardRoute
@@ -194,6 +212,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/donor'
     | '/request'
+    | '/admin/matching'
+    | '/admin/requests'
     | '/donor/availability'
     | '/donor/coordinate'
     | '/donor/dashboard'
@@ -213,6 +233,8 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/request'
+    | '/admin/matching'
+    | '/admin/requests'
     | '/donor/availability'
     | '/donor/coordinate'
     | '/donor/dashboard'
@@ -234,6 +256,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/donor'
     | '/request'
+    | '/admin/matching'
+    | '/admin/requests'
     | '/donor/availability'
     | '/donor/coordinate'
     | '/donor/dashboard'
@@ -393,14 +417,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DonorAvailabilityRouteImport
       parentRoute: typeof DonorRoute
     }
+    '/admin/requests': {
+      id: '/admin/requests'
+      path: '/requests'
+      fullPath: '/admin/requests'
+      preLoaderRoute: typeof AdminRequestsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/matching': {
+      id: '/admin/matching'
+      path: '/matching'
+      fullPath: '/admin/matching'
+      preLoaderRoute: typeof AdminMatchingRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminMatchingRoute: typeof AdminMatchingRoute
+  AdminRequestsRoute: typeof AdminRequestsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminMatchingRoute: AdminMatchingRoute,
+  AdminRequestsRoute: AdminRequestsRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
@@ -460,3 +502,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
