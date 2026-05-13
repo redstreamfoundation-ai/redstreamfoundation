@@ -84,6 +84,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "Redstream Foundation connects patients in urgent need of blood with verified, nearby volunteer donors across Delhi. Fast, private, NGO-led." },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/10a09c20-a9a1-41b7-b7bc-a4edecf6e56b" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/10a09c20-a9a1-41b7-b7bc-a4edecf6e56b" },
+      { property: "og:site_name", content: "Redstream Foundation" },
     ],
     links: [
       {
@@ -95,6 +96,34 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap",
+      },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "NGO",
+              "@id": "https://redstreamfoundation.lovable.app/#org",
+              name: "Redstream Foundation",
+              url: "https://redstreamfoundation.lovable.app",
+              description:
+                "Delhi-based non-profit coordinating verified emergency blood donations across the NCR by matching patients with nearby volunteer donors.",
+              areaServed: "Delhi NCR, India",
+              telephone: "+91-11-4000-0000",
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://redstreamfoundation.lovable.app/#website",
+              url: "https://redstreamfoundation.lovable.app",
+              name: "Redstream Foundation",
+              publisher: { "@id": "https://redstreamfoundation.lovable.app/#org" },
+              inLanguage: "en-IN",
+            },
+          ],
+        }),
       },
     ],
   }),
