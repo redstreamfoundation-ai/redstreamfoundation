@@ -21,16 +21,18 @@ const SEED: Donor[] = [
   { id: 1, initial: "R", zone: "Saket", km: 1.4, status: "pinging" },
 ];
 
-const TIMELINE_INIT = [
-  { t: "00:00", label: "Request verified", tone: "done" as const },
-  { t: "00:02", label: "Pinging nearby donors", tone: "active" as const },
+type TimelineTone = "done" | "active" | "muted";
+type TimelineItem = { t: string; label: string; tone: TimelineTone };
+const TIMELINE_INIT: TimelineItem[] = [
+  { t: "00:00", label: "Request verified", tone: "done" },
+  { t: "00:02", label: "Pinging nearby donors", tone: "active" },
 ];
 
 function Matching() {
   const navigate = useNavigate();
   const { state } = useRequest();
   const [donors, setDonors] = useState<Donor[]>(SEED);
-  const [timeline, setTimeline] = useState(TIMELINE_INIT);
+  const [timeline, setTimeline] = useState<TimelineItem[]>(TIMELINE_INIT);
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
