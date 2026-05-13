@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RequestRouteImport } from './routes/request'
 import { Route as DonorRouteImport } from './routes/donor'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DonorIndexRouteImport } from './routes/donor.index'
 import { Route as RequestVerifyingRouteImport } from './routes/request.verifying'
@@ -35,6 +36,11 @@ const RequestRoute = RequestRouteImport.update({
 const DonorRoute = DonorRouteImport.update({
   id: '/donor',
   path: '/donor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -115,6 +121,7 @@ const DonorAvailabilityRoute = DonorAvailabilityRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/donor': typeof DonorRouteWithChildren
   '/request': typeof RequestRouteWithChildren
   '/donor/availability': typeof DonorAvailabilityRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/request': typeof RequestRouteWithChildren
   '/donor/availability': typeof DonorAvailabilityRoute
   '/donor/coordinate': typeof DonorCoordinateRoute
@@ -153,6 +161,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/donor': typeof DonorRouteWithChildren
   '/request': typeof RequestRouteWithChildren
   '/donor/availability': typeof DonorAvailabilityRoute
@@ -174,6 +183,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/donor'
     | '/request'
     | '/donor/availability'
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/request'
     | '/donor/availability'
     | '/donor/coordinate'
@@ -211,6 +222,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/donor'
     | '/request'
     | '/donor/availability'
@@ -231,6 +243,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   DonorRoute: typeof DonorRouteWithChildren
   RequestRoute: typeof RequestRouteWithChildren
 }
@@ -249,6 +262,13 @@ declare module '@tanstack/react-router' {
       path: '/donor'
       fullPath: '/donor'
       preLoaderRoute: typeof DonorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -406,9 +426,20 @@ const RequestRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   DonorRoute: DonorRouteWithChildren,
   RequestRoute: RequestRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
