@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RequestRouteImport } from './routes/request'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DonorIndexRouteImport } from './routes/donor.index'
 import { Route as RequestVerifyingRouteImport } from './routes/request.verifying'
 import { Route as RequestProofRouteImport } from './routes/request.proof'
 import { Route as RequestMatchingRouteImport } from './routes/request.matching'
@@ -18,6 +19,12 @@ import { Route as RequestHospitalRouteImport } from './routes/request.hospital'
 import { Route as RequestConfirmedRouteImport } from './routes/request.confirmed'
 import { Route as RequestCompletedRouteImport } from './routes/request.completed'
 import { Route as RequestBloodRouteImport } from './routes/request.blood'
+import { Route as DonorThanksRouteImport } from './routes/donor.thanks'
+import { Route as DonorRequestRouteImport } from './routes/donor.request'
+import { Route as DonorRegisterRouteImport } from './routes/donor.register'
+import { Route as DonorDashboardRouteImport } from './routes/donor.dashboard'
+import { Route as DonorCoordinateRouteImport } from './routes/donor.coordinate'
+import { Route as DonorAvailabilityRouteImport } from './routes/donor.availability'
 
 const RequestRoute = RequestRouteImport.update({
   id: '/request',
@@ -27,6 +34,11 @@ const RequestRoute = RequestRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DonorIndexRoute = DonorIndexRouteImport.update({
+  id: '/donor/',
+  path: '/donor/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RequestVerifyingRoute = RequestVerifyingRouteImport.update({
@@ -64,10 +76,46 @@ const RequestBloodRoute = RequestBloodRouteImport.update({
   path: '/blood',
   getParentRoute: () => RequestRoute,
 } as any)
+const DonorThanksRoute = DonorThanksRouteImport.update({
+  id: '/donor/thanks',
+  path: '/donor/thanks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DonorRequestRoute = DonorRequestRouteImport.update({
+  id: '/donor/request',
+  path: '/donor/request',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DonorRegisterRoute = DonorRegisterRouteImport.update({
+  id: '/donor/register',
+  path: '/donor/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DonorDashboardRoute = DonorDashboardRouteImport.update({
+  id: '/donor/dashboard',
+  path: '/donor/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DonorCoordinateRoute = DonorCoordinateRouteImport.update({
+  id: '/donor/coordinate',
+  path: '/donor/coordinate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DonorAvailabilityRoute = DonorAvailabilityRouteImport.update({
+  id: '/donor/availability',
+  path: '/donor/availability',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/request': typeof RequestRouteWithChildren
+  '/donor/availability': typeof DonorAvailabilityRoute
+  '/donor/coordinate': typeof DonorCoordinateRoute
+  '/donor/dashboard': typeof DonorDashboardRoute
+  '/donor/register': typeof DonorRegisterRoute
+  '/donor/request': typeof DonorRequestRoute
+  '/donor/thanks': typeof DonorThanksRoute
   '/request/blood': typeof RequestBloodRoute
   '/request/completed': typeof RequestCompletedRoute
   '/request/confirmed': typeof RequestConfirmedRoute
@@ -75,10 +123,17 @@ export interface FileRoutesByFullPath {
   '/request/matching': typeof RequestMatchingRoute
   '/request/proof': typeof RequestProofRoute
   '/request/verifying': typeof RequestVerifyingRoute
+  '/donor/': typeof DonorIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/request': typeof RequestRouteWithChildren
+  '/donor/availability': typeof DonorAvailabilityRoute
+  '/donor/coordinate': typeof DonorCoordinateRoute
+  '/donor/dashboard': typeof DonorDashboardRoute
+  '/donor/register': typeof DonorRegisterRoute
+  '/donor/request': typeof DonorRequestRoute
+  '/donor/thanks': typeof DonorThanksRoute
   '/request/blood': typeof RequestBloodRoute
   '/request/completed': typeof RequestCompletedRoute
   '/request/confirmed': typeof RequestConfirmedRoute
@@ -86,11 +141,18 @@ export interface FileRoutesByTo {
   '/request/matching': typeof RequestMatchingRoute
   '/request/proof': typeof RequestProofRoute
   '/request/verifying': typeof RequestVerifyingRoute
+  '/donor': typeof DonorIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/request': typeof RequestRouteWithChildren
+  '/donor/availability': typeof DonorAvailabilityRoute
+  '/donor/coordinate': typeof DonorCoordinateRoute
+  '/donor/dashboard': typeof DonorDashboardRoute
+  '/donor/register': typeof DonorRegisterRoute
+  '/donor/request': typeof DonorRequestRoute
+  '/donor/thanks': typeof DonorThanksRoute
   '/request/blood': typeof RequestBloodRoute
   '/request/completed': typeof RequestCompletedRoute
   '/request/confirmed': typeof RequestConfirmedRoute
@@ -98,12 +160,19 @@ export interface FileRoutesById {
   '/request/matching': typeof RequestMatchingRoute
   '/request/proof': typeof RequestProofRoute
   '/request/verifying': typeof RequestVerifyingRoute
+  '/donor/': typeof DonorIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/request'
+    | '/donor/availability'
+    | '/donor/coordinate'
+    | '/donor/dashboard'
+    | '/donor/register'
+    | '/donor/request'
+    | '/donor/thanks'
     | '/request/blood'
     | '/request/completed'
     | '/request/confirmed'
@@ -111,10 +180,17 @@ export interface FileRouteTypes {
     | '/request/matching'
     | '/request/proof'
     | '/request/verifying'
+    | '/donor/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/request'
+    | '/donor/availability'
+    | '/donor/coordinate'
+    | '/donor/dashboard'
+    | '/donor/register'
+    | '/donor/request'
+    | '/donor/thanks'
     | '/request/blood'
     | '/request/completed'
     | '/request/confirmed'
@@ -122,10 +198,17 @@ export interface FileRouteTypes {
     | '/request/matching'
     | '/request/proof'
     | '/request/verifying'
+    | '/donor'
   id:
     | '__root__'
     | '/'
     | '/request'
+    | '/donor/availability'
+    | '/donor/coordinate'
+    | '/donor/dashboard'
+    | '/donor/register'
+    | '/donor/request'
+    | '/donor/thanks'
     | '/request/blood'
     | '/request/completed'
     | '/request/confirmed'
@@ -133,11 +216,19 @@ export interface FileRouteTypes {
     | '/request/matching'
     | '/request/proof'
     | '/request/verifying'
+    | '/donor/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RequestRoute: typeof RequestRouteWithChildren
+  DonorAvailabilityRoute: typeof DonorAvailabilityRoute
+  DonorCoordinateRoute: typeof DonorCoordinateRoute
+  DonorDashboardRoute: typeof DonorDashboardRoute
+  DonorRegisterRoute: typeof DonorRegisterRoute
+  DonorRequestRoute: typeof DonorRequestRoute
+  DonorThanksRoute: typeof DonorThanksRoute
+  DonorIndexRoute: typeof DonorIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -154,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/donor/': {
+      id: '/donor/'
+      path: '/donor'
+      fullPath: '/donor/'
+      preLoaderRoute: typeof DonorIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/request/verifying': {
@@ -205,6 +303,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RequestBloodRouteImport
       parentRoute: typeof RequestRoute
     }
+    '/donor/thanks': {
+      id: '/donor/thanks'
+      path: '/donor/thanks'
+      fullPath: '/donor/thanks'
+      preLoaderRoute: typeof DonorThanksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/donor/request': {
+      id: '/donor/request'
+      path: '/donor/request'
+      fullPath: '/donor/request'
+      preLoaderRoute: typeof DonorRequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/donor/register': {
+      id: '/donor/register'
+      path: '/donor/register'
+      fullPath: '/donor/register'
+      preLoaderRoute: typeof DonorRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/donor/dashboard': {
+      id: '/donor/dashboard'
+      path: '/donor/dashboard'
+      fullPath: '/donor/dashboard'
+      preLoaderRoute: typeof DonorDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/donor/coordinate': {
+      id: '/donor/coordinate'
+      path: '/donor/coordinate'
+      fullPath: '/donor/coordinate'
+      preLoaderRoute: typeof DonorCoordinateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/donor/availability': {
+      id: '/donor/availability'
+      path: '/donor/availability'
+      fullPath: '/donor/availability'
+      preLoaderRoute: typeof DonorAvailabilityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -234,6 +374,13 @@ const RequestRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RequestRoute: RequestRouteWithChildren,
+  DonorAvailabilityRoute: DonorAvailabilityRoute,
+  DonorCoordinateRoute: DonorCoordinateRoute,
+  DonorDashboardRoute: DonorDashboardRoute,
+  DonorRegisterRoute: DonorRegisterRoute,
+  DonorRequestRoute: DonorRequestRoute,
+  DonorThanksRoute: DonorThanksRoute,
+  DonorIndexRoute: DonorIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

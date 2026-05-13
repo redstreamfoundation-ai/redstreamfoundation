@@ -1,0 +1,124 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Check, Clock, MapPin, X, Calendar, Droplet, Building2, Navigation } from "lucide-react";
+import { StepShell } from "@/components/request/StepShell";
+
+export const Route = createFileRoute("/donor/request")({
+  component: IncomingRequest,
+});
+
+function IncomingRequest() {
+  const navigate = useNavigate();
+
+  return (
+    <StepShell
+      eyebrow="Incoming emergency"
+      title="A patient near you needs help."
+      subtitle="This request has been verified by Redstream coordinators. Take a moment — no pressure."
+      footer={
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => navigate({ to: "/donor/dashboard" })}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-border bg-background px-4 py-3.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+          >
+            <X className="h-4 w-4" /> Not available
+          </button>
+          <button
+            onClick={() => navigate({ to: "/donor/coordinate" })}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-3.5 text-sm font-medium text-primary-foreground shadow-[var(--shadow-glow)] hover:bg-[var(--primary-deep)]"
+          >
+            <Check className="h-4 w-4" /> Accept request
+          </button>
+        </div>
+      }
+    >
+      <div className="overflow-hidden rounded-3xl border border-primary/30 bg-[var(--gradient-soft)] p-6 shadow-[var(--shadow-elevated)]">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[var(--gradient-emergency)] text-primary-foreground shadow-[var(--shadow-glow)]">
+              <Droplet className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="font-serif-display text-3xl text-foreground">B+</div>
+              <div className="text-xs text-muted-foreground">2 units · Whole blood</div>
+            </div>
+          </div>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-[11px] font-semibold text-primary-foreground">
+            <span className="h-1.5 w-1.5 rounded-full bg-background animate-pulse-dot" />
+            Critical
+          </span>
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <Stat icon={Building2} label="Hospital" value="Sir Ganga Ram" />
+          <Stat icon={MapPin} label="Distance" value="2.4 km" />
+          <Stat icon={Clock} label="Needed by" value="In 1 hour" />
+          <Stat icon={Navigation} label="Drive time" value="~ 12 min" />
+        </div>
+      </div>
+
+      {/* Match indicator */}
+      <div className="mt-5 flex items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-500/10 text-emerald-600">
+          <Check className="h-4 w-4" />
+        </div>
+        <div className="text-sm leading-relaxed text-foreground">
+          You're a strong match — same blood group, within your radius, and inside
+          your active hours.
+        </div>
+      </div>
+
+      {/* Patient context */}
+      <div className="mt-5 rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-soft)]">
+        <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+          Patient
+        </div>
+        <div className="mt-3 flex items-center justify-between text-sm">
+          <span className="text-foreground">47-year-old, post-surgery</span>
+          <span className="text-muted-foreground">Rajinder Nagar</span>
+        </div>
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+          Identifying details are kept minimal until you accept. Patient contact is
+          shared via masked relay only.
+        </p>
+      </div>
+
+      {/* Available later */}
+      <button
+        onClick={() => navigate({ to: "/donor/dashboard" })}
+        className="mt-5 flex w-full items-center justify-between rounded-2xl border border-border bg-secondary/60 p-4 text-left transition-colors hover:bg-secondary"
+      >
+        <div className="flex items-center gap-3">
+          <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
+            <Calendar className="h-4 w-4" />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-foreground">Available later</div>
+            <div className="text-xs text-muted-foreground">
+              I can help in 2 — 4 hours
+            </div>
+          </div>
+        </div>
+        <span className="text-xs font-semibold text-primary">Notify me</span>
+      </button>
+    </StepShell>
+  );
+}
+
+function Stat({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-background p-4">
+      <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+        <Icon className="h-3.5 w-3.5 text-primary" /> {label}
+      </div>
+      <div className="mt-1 text-base font-semibold text-foreground">{value}</div>
+    </div>
+  );
+}

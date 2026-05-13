@@ -1,4 +1,5 @@
 import { Phone } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Logo } from "./Logo";
 
 export function Footer() {
@@ -19,8 +20,8 @@ export function Footer() {
               Platform
             </div>
             <ul className="mt-3 space-y-2 text-foreground">
-              <li><a href="#request" className="hover:text-primary">Request blood</a></li>
-              <li><a href="#donor" className="hover:text-primary">Become a donor</a></li>
+              <li><Link to="/request" className="hover:text-primary">Request blood</Link></li>
+              <li><Link to="/donor" className="hover:text-primary">Become a donor</Link></li>
               <li><a href="#how" className="hover:text-primary">How it works</a></li>
             </ul>
           </div>
