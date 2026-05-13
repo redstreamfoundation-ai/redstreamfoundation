@@ -6,7 +6,12 @@ export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
       { title: "Operations · Redstream Foundation" },
-      { name: "description", content: "Emergency coordination command center." },
+      {
+        name: "description",
+        content:
+          "Internal Redstream operations console for verifying requests, monitoring live donor matching, and coordinating emergency blood responses across Delhi NCR.",
+      },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
 });
