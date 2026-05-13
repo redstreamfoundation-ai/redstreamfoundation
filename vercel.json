@@ -1,6 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "bun run build && node scripts/vercel-build.mjs",
+  "buildCommand": "bun run build",
   "installCommand": "bun install",
-  "framework": null
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/((?!assets/|favicon.ico|robots.txt|sitemap.xml|og/).*)",
+      "destination": "/index.html"
+    }
+  ]
 }
