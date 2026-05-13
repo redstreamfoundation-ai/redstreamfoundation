@@ -17,6 +17,12 @@ export type DonorState = {
   emergencyOnly: boolean;
   radiusKm: number;
   active: boolean;
+  notifications: { push: boolean; sms: boolean; whatsapp: boolean; quietHours: boolean };
+  lastDecision:
+    | null
+    | { kind: "accepted"; at: number }
+    | { kind: "declined"; at: number }
+    | { kind: "later"; at: number; inHours: number };
 };
 
 const DEFAULT: DonorState = {
@@ -35,6 +41,8 @@ const DEFAULT: DonorState = {
   emergencyOnly: false,
   radiusKm: 8,
   active: true,
+  notifications: { push: true, sms: true, whatsapp: false, quietHours: false },
+  lastDecision: null,
 };
 
 type Ctx = {
