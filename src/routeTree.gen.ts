@@ -15,9 +15,11 @@ import { Route as DonorRouteImport } from './routes/donor'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RequestIndexRouteImport } from './routes/request.index'
 import { Route as DonorIndexRouteImport } from './routes/donor.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as RequestVerifyingRouteImport } from './routes/request.verifying'
+import { Route as RequestSubmittedRouteImport } from './routes/request.submitted'
+import { Route as RequestReviewRouteImport } from './routes/request.review'
 import { Route as RequestProofRouteImport } from './routes/request.proof'
 import { Route as RequestMatchingRouteImport } from './routes/request.matching'
 import { Route as RequestHospitalRouteImport } from './routes/request.hospital'
@@ -66,6 +68,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RequestIndexRoute = RequestIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => RequestRoute,
+} as any)
 const DonorIndexRoute = DonorIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -76,9 +83,14 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
-const RequestVerifyingRoute = RequestVerifyingRouteImport.update({
-  id: '/verifying',
-  path: '/verifying',
+const RequestSubmittedRoute = RequestSubmittedRouteImport.update({
+  id: '/submitted',
+  path: '/submitted',
+  getParentRoute: () => RequestRoute,
+} as any)
+const RequestReviewRoute = RequestReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
   getParentRoute: () => RequestRoute,
 } as any)
 const RequestProofRoute = RequestProofRouteImport.update({
@@ -191,14 +203,15 @@ export interface FileRoutesByFullPath {
   '/request/hospital': typeof RequestHospitalRoute
   '/request/matching': typeof RequestMatchingRoute
   '/request/proof': typeof RequestProofRoute
-  '/request/verifying': typeof RequestVerifyingRoute
+  '/request/review': typeof RequestReviewRoute
+  '/request/submitted': typeof RequestSubmittedRoute
   '/admin/': typeof AdminIndexRoute
   '/donor/': typeof DonorIndexRoute
+  '/request/': typeof RequestIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/request': typeof RequestRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/donors': typeof AdminDonorsRoute
@@ -217,9 +230,11 @@ export interface FileRoutesByTo {
   '/request/hospital': typeof RequestHospitalRoute
   '/request/matching': typeof RequestMatchingRoute
   '/request/proof': typeof RequestProofRoute
-  '/request/verifying': typeof RequestVerifyingRoute
+  '/request/review': typeof RequestReviewRoute
+  '/request/submitted': typeof RequestSubmittedRoute
   '/admin': typeof AdminIndexRoute
   '/donor': typeof DonorIndexRoute
+  '/request': typeof RequestIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -246,9 +261,11 @@ export interface FileRoutesById {
   '/request/hospital': typeof RequestHospitalRoute
   '/request/matching': typeof RequestMatchingRoute
   '/request/proof': typeof RequestProofRoute
-  '/request/verifying': typeof RequestVerifyingRoute
+  '/request/review': typeof RequestReviewRoute
+  '/request/submitted': typeof RequestSubmittedRoute
   '/admin/': typeof AdminIndexRoute
   '/donor/': typeof DonorIndexRoute
+  '/request/': typeof RequestIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -276,14 +293,15 @@ export interface FileRouteTypes {
     | '/request/hospital'
     | '/request/matching'
     | '/request/proof'
-    | '/request/verifying'
+    | '/request/review'
+    | '/request/submitted'
     | '/admin/'
     | '/donor/'
+    | '/request/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
-    | '/request'
     | '/sitemap.xml'
     | '/admin/analytics'
     | '/admin/donors'
@@ -302,9 +320,11 @@ export interface FileRouteTypes {
     | '/request/hospital'
     | '/request/matching'
     | '/request/proof'
-    | '/request/verifying'
+    | '/request/review'
+    | '/request/submitted'
     | '/admin'
     | '/donor'
+    | '/request'
   id:
     | '__root__'
     | '/'
@@ -330,9 +350,11 @@ export interface FileRouteTypes {
     | '/request/hospital'
     | '/request/matching'
     | '/request/proof'
-    | '/request/verifying'
+    | '/request/review'
+    | '/request/submitted'
     | '/admin/'
     | '/donor/'
+    | '/request/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -388,6 +410,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/request/': {
+      id: '/request/'
+      path: '/'
+      fullPath: '/request/'
+      preLoaderRoute: typeof RequestIndexRouteImport
+      parentRoute: typeof RequestRoute
+    }
     '/donor/': {
       id: '/donor/'
       path: '/'
@@ -402,11 +431,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/request/verifying': {
-      id: '/request/verifying'
-      path: '/verifying'
-      fullPath: '/request/verifying'
-      preLoaderRoute: typeof RequestVerifyingRouteImport
+    '/request/submitted': {
+      id: '/request/submitted'
+      path: '/submitted'
+      fullPath: '/request/submitted'
+      preLoaderRoute: typeof RequestSubmittedRouteImport
+      parentRoute: typeof RequestRoute
+    }
+    '/request/review': {
+      id: '/request/review'
+      path: '/review'
+      fullPath: '/request/review'
+      preLoaderRoute: typeof RequestReviewRouteImport
       parentRoute: typeof RequestRoute
     }
     '/request/proof': {
@@ -580,7 +616,9 @@ interface RequestRouteChildren {
   RequestHospitalRoute: typeof RequestHospitalRoute
   RequestMatchingRoute: typeof RequestMatchingRoute
   RequestProofRoute: typeof RequestProofRoute
-  RequestVerifyingRoute: typeof RequestVerifyingRoute
+  RequestReviewRoute: typeof RequestReviewRoute
+  RequestSubmittedRoute: typeof RequestSubmittedRoute
+  RequestIndexRoute: typeof RequestIndexRoute
 }
 
 const RequestRouteChildren: RequestRouteChildren = {
@@ -590,7 +628,9 @@ const RequestRouteChildren: RequestRouteChildren = {
   RequestHospitalRoute: RequestHospitalRoute,
   RequestMatchingRoute: RequestMatchingRoute,
   RequestProofRoute: RequestProofRoute,
-  RequestVerifyingRoute: RequestVerifyingRoute,
+  RequestReviewRoute: RequestReviewRoute,
+  RequestSubmittedRoute: RequestSubmittedRoute,
+  RequestIndexRoute: RequestIndexRoute,
 }
 
 const RequestRouteWithChildren =
@@ -607,13 +647,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
