@@ -29,24 +29,31 @@ export function StepShell({
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur-md">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-3.5 lg:max-w-5xl">
-          {showBack ? (
-            <button
-              onClick={() => router.history.back()}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:text-foreground"
-              aria-label="Go back"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-          ) : (
+          <div className="flex items-center gap-3">
+            {showBack ? (
+              <button
+                onClick={() => router.history.back()}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:text-foreground"
+                aria-label="Go back"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+            ) : null}
             <Logo />
-          )}
-          <a
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="hidden items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-700 sm:inline-flex">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse-dot" />
+              Coordination active
+            </span>
+            <a
             href="tel:+911140000000"
             className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground"
-          >
-            <Phone className="h-3.5 w-3.5 text-primary" />
-            Helpline
-          </a>
+            >
+              <Phone className="h-3.5 w-3.5 text-primary" />
+              Helpline
+            </a>
+          </div>
         </div>
         {step ? (
           <div className="mx-auto max-w-3xl px-5 pb-3 lg:max-w-5xl">
