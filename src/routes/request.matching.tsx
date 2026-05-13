@@ -24,8 +24,9 @@ const SEED: Donor[] = [
 type TimelineTone = "done" | "active" | "muted";
 type TimelineItem = { t: string; label: string; tone: TimelineTone };
 const TIMELINE_INIT: TimelineItem[] = [
-  { t: "00:00", label: "Request verified", tone: "done" },
-  { t: "00:02", label: "Pinging nearby donors", tone: "active" },
+  { t: "00:00", label: "Request verified by coordinator", tone: "done" },
+  { t: "00:02", label: "Searching nearby active donors…", tone: "active" },
+  { t: "00:04", label: "Wave 1 notifications sent to 12 donors", tone: "active" },
 ];
 
 function Matching() {
@@ -52,8 +53,13 @@ function Matching() {
       },
       {
         at: 2800,
-        run: () =>
-          setDonors((d) => d.map((x) => (x.id === 1 ? { ...x, status: "viewed" } : x))),
+        run: () => {
+          setDonors((d) => d.map((x) => (x.id === 1 ? { ...x, status: "viewed" } : x)));
+          setTimeline((tl) => [
+            ...tl,
+            { t: "00:05", label: "2 donors reviewing request", tone: "active" as const },
+          ]);
+        },
       },
       {
         at: 3600,
@@ -69,7 +75,8 @@ function Matching() {
           setDonors((d) => d.map((x) => (x.id === 2 ? { ...x, status: "declined" } : x)));
           setTimeline((tl) => [
             ...tl,
-            { t: "00:08", label: "1 donor unavailable", tone: "muted" as const },
+            { t: "00:07", label: "1 donor unavailable — expanding radius to 8 km", tone: "muted" as const },
+            { t: "00:08", label: "Wave 2 notifications sent to nearby zones", tone: "active" as const },
           ]);
         },
       },
@@ -83,8 +90,13 @@ function Matching() {
       },
       {
         at: 6200,
-        run: () =>
-          setDonors((d) => d.map((x) => (x.id === 3 ? { ...x, status: "viewed" } : x))),
+        run: () => {
+          setDonors((d) => d.map((x) => (x.id === 3 ? { ...x, status: "viewed" } : x)));
+          setTimeline((tl) => [
+            ...tl,
+            { t: "00:10", label: "Matching priority upgraded due to urgency", tone: "active" as const },
+          ]);
+        },
       },
       {
         at: 7400,
@@ -92,7 +104,7 @@ function Matching() {
           setDonors((d) => d.map((x) => (x.id === 1 ? { ...x, status: "confirmed" } : x)));
           setTimeline((tl) => [
             ...tl,
-            { t: "00:12", label: "Donor confirmed", tone: "done" as const },
+            { t: "00:12", label: "Donor confirmed — coordinator on call with attendant", tone: "done" as const },
           ]);
         },
       },

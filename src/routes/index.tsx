@@ -12,6 +12,8 @@ import { DelhiTicker } from "@/components/landing/DelhiTicker";
 import { MatchingWave } from "@/components/landing/MatchingWave";
 import { CoverageMap } from "@/components/landing/CoverageMap";
 import { ImpactStories } from "@/components/landing/ImpactStories";
+import { FounderMission } from "@/components/landing/FounderMission";
+import { DelhiPilot } from "@/components/landing/DelhiPilot";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -46,9 +48,11 @@ function Index() {
         <Hero />
         <DelhiTicker />
         <ImpactMetrics />
+        <FounderMission />
         <HowItWorks />
         <MatchingWave />
         <WhyRedstream />
+        <DelhiPilot />
         <LiveActivityFeed />
         <CoverageMap />
         <ImpactStories />
