@@ -1,10 +1,14 @@
-import { Phone, Mail, ShieldCheck, MapPinned, Users, LifeBuoy } from "lucide-react";
+import { Phone, Mail, MapPin, ShieldCheck, MapPinned, Users, LifeBuoy } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Logo } from "./Logo";
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-secondary/40 px-5 py-14">
+    <footer
+      role="contentinfo"
+      aria-label="Site footer"
+      className="border-t border-border bg-secondary/40 px-5 py-14"
+    >
       <div className="mx-auto max-w-6xl">
         {/* Trust strip */}
         <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
@@ -14,8 +18,8 @@ export function Footer() {
           <TrustChip icon={LifeBuoy} label="Emergency Support" sub="24/7 coordinator desk" />
         </div>
 
-        <div className="mt-12 grid gap-10 md:grid-cols-12">
-          <div className="md:col-span-4">
+        <div className="mt-12 grid gap-10 md:grid-cols-12 md:gap-x-8 lg:gap-x-12">
+          <div className="md:col-span-12 lg:col-span-4">
             <Logo />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
               Redstream Foundation is a Delhi-based non-profit coordinating verified
@@ -33,7 +37,10 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6 text-sm md:col-span-8 md:grid-cols-4">
+          <nav
+            aria-label="Footer navigation"
+            className="grid grid-cols-1 gap-x-6 gap-y-8 text-sm sm:grid-cols-2 md:col-span-12 md:grid-cols-4 lg:col-span-8"
+          >
             <FooterCol title="Platform">
               <li><Link to="/request" className="hover:text-primary">Request blood</Link></li>
               <li><Link to="/donor" className="hover:text-primary">Become a donor</Link></li>
@@ -46,35 +53,9 @@ export function Footer() {
               <li><a href="#" className="hover:text-primary">Privacy policy</a></li>
               <li><a href="#" className="hover:text-primary">Terms of use</a></li>
             </FooterCol>
-            <FooterCol title="Contact">
-              <li>
-                <a
-                  href="mailto:contact@redstreamfoundation.org"
-                  className="flex items-start gap-1.5 break-all hover:text-primary"
-                >
-                  <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  <span className="break-all">contact@redstreamfoundation.org</span>
-                </a>
-              </li>
-              <li className="text-muted-foreground">Coordinator desk · 24/7</li>
-              <li className="text-muted-foreground">Media & partnerships on request</li>
-            </FooterCol>
-            <div>
-              <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                Emergency helpline
-              </div>
-              <a
-                href="tel:+911140000000"
-                className="mt-3 inline-flex items-center gap-2 text-base font-semibold text-primary"
-              >
-                <Phone className="h-4 w-4" />
-                +91 11 4000 0000
-              </a>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Available 24/7 across Delhi NCR
-              </p>
-            </div>
-          </div>
+            <ContactCol />
+            <HelplineCol />
+          </nav>
         </div>
 
         <div className="mt-12 rounded-2xl border border-border bg-background/60 p-4 text-xs leading-relaxed text-muted-foreground">
@@ -117,11 +98,72 @@ function TrustChip({
 
 function FooterCol({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div>
-      <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+    <div className="min-w-0">
+      <h3 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
         {title}
-      </div>
-      <ul className="mt-3 space-y-2 text-foreground">{children}</ul>
+      </h3>
+      <ul className="mt-3 space-y-2 break-words text-foreground">{children}</ul>
+    </div>
+  );
+}
+
+function ContactCol() {
+  return (
+    <div className="min-w-0">
+      <h3 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+        Contact
+      </h3>
+      <dl className="mt-3 grid grid-cols-[1.25rem_minmax(0,1fr)] gap-x-2 gap-y-3 text-sm text-foreground">
+        <dt className="sr-only">Email</dt>
+        <dd className="contents">
+          <Mail className="mt-1 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          <a
+            href="mailto:contact@redstreamfoundation.org"
+            aria-label="Email Redstream Foundation"
+            className="-my-1 block break-all py-1 hover:text-primary"
+          >
+            contact@redstreamfoundation.org
+          </a>
+        </dd>
+        <dt className="sr-only">Coordinator hours</dt>
+        <dd className="contents">
+          <span className="mt-1 inline-block h-1.5 w-1.5 self-start rounded-full bg-emerald-500" aria-hidden="true" />
+          <span className="text-xs text-muted-foreground">Coordinator desk · 24/7</span>
+        </dd>
+        <dt className="sr-only">Partnerships</dt>
+        <dd className="contents">
+          <span className="mt-1 inline-block h-1.5 w-1.5 self-start rounded-full bg-muted-foreground/50" aria-hidden="true" />
+          <span className="text-xs text-muted-foreground">Media &amp; partnerships on request</span>
+        </dd>
+      </dl>
+    </div>
+  );
+}
+
+function HelplineCol() {
+  return (
+    <div className="min-w-0">
+      <h3 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+        Emergency helpline
+      </h3>
+      <dl className="mt-3 grid grid-cols-[1.25rem_minmax(0,1fr)] gap-x-2 gap-y-3">
+        <dt className="sr-only">Phone</dt>
+        <dd className="contents">
+          <Phone className="mt-2.5 h-4 w-4 text-primary" aria-hidden="true" />
+          <a
+            href="tel:+911140000000"
+            aria-label="Call Redstream emergency helpline at +91 11 4000 0000"
+            className="-my-1 inline-flex min-h-11 items-center break-all py-1 text-base font-semibold text-primary hover:underline"
+          >
+            +91 11 4000 0000
+          </a>
+        </dd>
+        <dt className="sr-only">Coverage</dt>
+        <dd className="contents">
+          <MapPin className="mt-1 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          <span className="text-xs text-muted-foreground">Available 24/7 across Delhi NCR</span>
+        </dd>
+      </dl>
     </div>
   );
 }

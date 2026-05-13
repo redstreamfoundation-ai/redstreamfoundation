@@ -36,6 +36,8 @@ function ago(ms: number): string {
 export function LiveActivityFeed() {
   const [events, setEvents] = useState<Event[]>(FALLBACK);
   const [pulse, setPulse] = useState(0);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const pushEvent = (ev: Event) => {
     setEvents((prev) => {
@@ -225,7 +227,9 @@ export function LiveActivityFeed() {
                       {e.zone}, Delhi NCR
                     </div>
                   </div>
-                  <span className="shrink-0 text-xs text-muted-foreground">{ago(e.at)}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground" suppressHydrationWarning>
+                    {mounted ? ago(e.at) : ""}
+                  </span>
                 </li>
               );
             })}
