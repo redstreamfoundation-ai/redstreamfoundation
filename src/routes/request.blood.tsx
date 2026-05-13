@@ -24,6 +24,7 @@ function BloodStep() {
   return (
     <StepShell
       step={1}
+      total={4}
       eyebrow="Blood requirement"
       title="What does the patient need?"
       subtitle="The more accurate this is, the better we can match the right donors."
