@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Check, Clock, MapPin, X, Calendar, Droplet, Building2, Navigation } from "lucide-react";
+import { Check, Clock, MapPin, X, Calendar, Droplet, Building2, Navigation, BellRing } from "lucide-react";
+import { useState } from "react";
 import { StepShell } from "@/components/request/StepShell";
+import { useDonor } from "@/lib/donor-store";
 
 export const Route = createFileRoute("/donor/request")({
   component: IncomingRequest,
@@ -8,6 +10,22 @@ export const Route = createFileRoute("/donor/request")({
 
 function IncomingRequest() {
   const navigate = useNavigate();
+  const { update } = useDonor();
+  const [laterOpen, setLaterOpen] = useState(false);
+  const [confirmDecline, setConfirmDecline] = useState(false);
+
+  const accept = () => {
+    update({ lastDecision: { kind: "accepted", at: Date.now() } });
+    navigate({ to: "/donor/coordinate" });
+  };
+  const decline = () => {
+    update({ lastDecision: { kind: "declined", at: Date.now() } });
+    navigate({ to: "/donor/dashboard" });
+  };
+  const scheduleLater = (inHours: number) => {
+    update({ lastDecision: { kind: "later", at: Date.now(), inHours } });
+    navigate({ to: "/donor/dashboard" });
+  };
 
   return (
     <StepShell
@@ -17,13 +35,13 @@ function IncomingRequest() {
       footer={
         <div className="grid grid-cols-2 gap-2">
           <button
-            onClick={() => navigate({ to: "/donor/dashboard" })}
+            onClick={() => setConfirmDecline(true)}
             className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-border bg-background px-4 py-3.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
           >
             <X className="h-4 w-4" /> Not available
           </button>
           <button
-            onClick={() => navigate({ to: "/donor/coordinate" })}
+            onClick={accept}
             className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-3.5 text-sm font-medium text-primary-foreground shadow-[var(--shadow-glow)] hover:bg-[var(--primary-deep)]"
           >
             <Check className="h-4 w-4" /> Accept request
@@ -84,7 +102,7 @@ function IncomingRequest() {
 
       {/* Available later */}
       <button
-        onClick={() => navigate({ to: "/donor/dashboard" })}
+        onClick={() => setLaterOpen((v) => !v)}
         className="mt-5 flex w-full items-center justify-between rounded-2xl border border-border bg-secondary/60 p-4 text-left transition-colors hover:bg-secondary"
       >
         <div className="flex items-center gap-3">
@@ -98,8 +116,68 @@ function IncomingRequest() {
             </div>
           </div>
         </div>
-        <span className="text-xs font-semibold text-primary">Notify me</span>
+        <span className="text-xs font-semibold text-primary">{laterOpen ? "Hide" : "Choose time"}</span>
       </button>
+
+      {laterOpen ? (
+        <div className="mt-3 rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-soft)] animate-slide-up">
+          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            <BellRing className="h-3.5 w-3.5 text-primary" /> Remind me in
+          </div>
+          <div className="mt-3 grid grid-cols-4 gap-2">
+            {[1, 2, 4, 8].map((h) => (
+              <button
+                key={h}
+                onClick={() => scheduleLater(h)}
+                className="rounded-xl border border-border bg-background py-3 text-sm font-semibold text-foreground transition-all hover:border-primary/40 hover:bg-primary/5"
+              >
+                {h}h
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+            We'll reach out again only if this request is still open. You won't be
+            pinged for unrelated requests during this window.
+          </p>
+        </div>
+      ) : null}
+
+      {confirmDecline ? (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-foreground/30 backdrop-blur-sm px-5"
+          onClick={() => setConfirmDecline(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-elevated)] animate-slide-up"
+          >
+            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-secondary text-muted-foreground">
+              <X className="h-5 w-5" />
+            </div>
+            <h3 className="mt-4 text-lg font-semibold text-foreground">
+              Mark as not available?
+            </h3>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              We'll quietly route this to the next nearest donor. No penalty — your
+              status stays active.
+            </p>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setConfirmDecline(false)}
+                className="rounded-full border border-border bg-background px-4 py-3 text-sm font-medium text-foreground"
+              >
+                Go back
+              </button>
+              <button
+                onClick={decline}
+                className="rounded-full bg-foreground px-4 py-3 text-sm font-medium text-background"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </StepShell>
   );
 }
