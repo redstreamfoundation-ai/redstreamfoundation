@@ -6,6 +6,24 @@ import { useDonor } from "@/lib/donor-store";
 
 export const Route = createFileRoute("/donor/register")({
   component: DonorRegister,
+  head: () => ({
+    meta: [
+      { title: "Donor registration — Redstream Foundation" },
+      {
+        name: "description",
+        content:
+          "Register as a Redstream emergency blood donor in Delhi: phone OTP verification, blood group, locality, and last donation date.",
+      },
+      { property: "og:title", content: "Donor registration — Redstream Foundation" },
+      {
+        property: "og:description",
+        content:
+          "Quick, verified sign-up for Delhi's emergency blood donor network.",
+      },
+      { property: "og:url", content: "https://redstreamfoundation.lovable.app/donor/register" },
+    ],
+    links: [{ rel: "canonical", href: "https://redstreamfoundation.lovable.app/donor/register" }],
+  }),
 });
 
 const GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
