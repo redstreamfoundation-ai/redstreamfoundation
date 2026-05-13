@@ -48,8 +48,12 @@ export function Footer() {
             </FooterCol>
             <FooterCol title="Contact">
               <li>
-                <a href="mailto:contact@redstreamfoundation.org" className="inline-flex items-center gap-1.5 hover:text-primary">
-                  <Mail className="h-3.5 w-3.5" /> contact@redstreamfoundation.org
+                <a
+                  href="mailto:contact@redstreamfoundation.org"
+                  className="flex items-start gap-1.5 break-all hover:text-primary"
+                >
+                  <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  <span className="break-all">contact@redstreamfoundation.org</span>
                 </a>
               </li>
               <li className="text-muted-foreground">Coordinator desk · 24/7</li>
