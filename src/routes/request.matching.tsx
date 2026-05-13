@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { MapPin, Radio, Check, X, Clock, Navigation } from "lucide-react";
 import { StepShell } from "@/components/request/StepShell";
-import { useRequest } from "@/lib/request-store";
+import { useRequest, modeForUrgency } from "@/lib/request-store";
 
 export const Route = createFileRoute("/request/matching")({
   component: Matching,
@@ -32,6 +32,7 @@ const TIMELINE_INIT: TimelineItem[] = [
 function Matching() {
   const navigate = useNavigate();
   const { state } = useRequest();
+  const mode = modeForUrgency(state.urgency);
   const [donors, setDonors] = useState<Donor[]>(SEED);
   const [timeline, setTimeline] = useState<TimelineItem[]>(TIMELINE_INIT);
   const [elapsed, setElapsed] = useState(0);
@@ -119,11 +120,43 @@ function Matching() {
 
   return (
     <StepShell
-      eyebrow="Live matching"
-      title="Reaching nearby donors now."
-      subtitle={`We're pinging eligible ${state.bloodGroup || "compatible"} donors within 5 km of ${state.locality || "your hospital"}.`}
+      eyebrow={
+        mode.id === "scheduled"
+          ? "Planned coordination"
+          : mode.id === "urgent"
+          ? "Same-day matching"
+          : "Live emergency matching"
+      }
+      title={
+        mode.id === "scheduled"
+          ? "Scheduling donors for your timeline."
+          : mode.id === "urgent"
+          ? "Reaching donors for today."
+          : "Reaching nearby donors now."
+      }
+      subtitle={
+        mode.id === "scheduled"
+          ? `We're inviting eligible ${state.bloodGroup || "compatible"} donors near ${state.locality || "the hospital"} to confirm a slot in the next 1–3 days.`
+          : mode.id === "urgent"
+          ? `Active outreach to eligible ${state.bloodGroup || "compatible"} donors within 8 km of ${state.locality || "your hospital"} — confirmations expected within hours.`
+          : `We're pinging eligible ${state.bloodGroup || "compatible"} donors within 5 km of ${state.locality || "your hospital"}.`
+      }
       showBack={false}
     >
+      <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs text-foreground shadow-[var(--shadow-soft)]">
+        <span
+          className={`h-2 w-2 rounded-full ${
+            mode.tone === "critical"
+              ? "bg-primary animate-pulse-dot"
+              : mode.tone === "urgent"
+              ? "bg-amber-500"
+              : "bg-emerald-500"
+          }`}
+        />
+        <span className="font-semibold">{mode.label}</span>
+        <span className="text-muted-foreground">· {mode.window}</span>
+      </div>
+
       {/* Map mock */}
       <div className="relative overflow-hidden rounded-3xl border border-border bg-secondary/60 shadow-[var(--shadow-soft)]">
         <div className="aspect-[16/10] w-full bg-[radial-gradient(circle_at_50%_50%,oklch(0.96_0.02_25)_0%,oklch(0.97_0.005_25)_60%,oklch(0.95_0.008_25)_100%)]">
