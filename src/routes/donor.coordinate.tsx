@@ -4,6 +4,17 @@ import { StepShell } from "@/components/request/StepShell";
 
 export const Route = createFileRoute("/donor/coordinate")({
   component: Coordinate,
+  head: () => ({
+    meta: [
+      { title: "Coordinate your donation — Redstream Foundation" },
+      {
+        name: "description",
+        content:
+          "Hospital details, contact, estimated timing, and step-by-step instructions for your accepted Redstream emergency blood donation.",
+      },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
 });
 
 const STEPS = [

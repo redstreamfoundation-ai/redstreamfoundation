@@ -6,6 +6,17 @@ import { useDonor } from "@/lib/donor-store";
 
 export const Route = createFileRoute("/donor/request")({
   component: IncomingRequest,
+  head: () => ({
+    meta: [
+      { title: "Incoming blood request — Redstream Foundation" },
+      {
+        name: "description",
+        content:
+          "Review an incoming verified emergency blood request: hospital area, distance, urgency, and availability match.",
+      },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
 });
 
 function IncomingRequest() {

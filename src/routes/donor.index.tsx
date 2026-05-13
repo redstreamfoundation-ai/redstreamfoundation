@@ -12,6 +12,24 @@ import { Logo } from "@/components/landing/Logo";
 
 export const Route = createFileRoute("/donor/")({
   component: DonorLanding,
+  head: () => ({
+    meta: [
+      { title: "Become an emergency blood donor in Delhi — Redstream" },
+      {
+        name: "description",
+        content:
+          "Join Redstream's verified volunteer donor network in Delhi NCR. Set your availability, get matched only when nearby, and help save lives in emergencies.",
+      },
+      { property: "og:title", content: "Become an emergency blood donor in Delhi — Redstream" },
+      {
+        property: "og:description",
+        content:
+          "Volunteer for verified emergency blood requests near you, on your schedule, with full privacy.",
+      },
+      { property: "og:url", content: "https://redstreamfoundation.lovable.app/donor" },
+    ],
+    links: [{ rel: "canonical", href: "https://redstreamfoundation.lovable.app/donor" }],
+  }),
 });
 
 function DonorLanding() {

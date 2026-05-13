@@ -10,7 +10,15 @@ export const Route = createFileRoute("/request")({
         content:
           "Submit a verified emergency blood request and get matched with nearby donors across Delhi.",
       },
+      { property: "og:title", content: "Request emergency blood — Redstream Foundation" },
+      {
+        property: "og:description",
+        content:
+          "Start a verified emergency blood request in minutes and reach nearby Delhi donors through Redstream.",
+      },
+      { property: "og:url", content: "https://redstreamfoundation.lovable.app/request" },
     ],
+    links: [{ rel: "canonical", href: "https://redstreamfoundation.lovable.app/request" }],
   }),
   component: () => (
     <RequestProvider>

@@ -20,6 +20,25 @@ import { useDonor } from "@/lib/donor-store";
 
 export const Route = createFileRoute("/donor/dashboard")({
   component: Dashboard,
+  head: () => ({
+    meta: [
+      { title: "Donor dashboard — Redstream Foundation" },
+      {
+        name: "description",
+        content:
+          "Your Redstream donor dashboard: availability status, impact metrics, nearby requests, cooldown tracker, and notification settings.",
+      },
+      { property: "og:title", content: "Donor dashboard — Redstream Foundation" },
+      {
+        property: "og:description",
+        content:
+          "Track your donations, availability, and nearby emergency requests.",
+      },
+      { property: "og:url", content: "https://redstreamfoundation.lovable.app/donor/dashboard" },
+      { name: "robots", content: "noindex" },
+    ],
+    links: [{ rel: "canonical", href: "https://redstreamfoundation.lovable.app/donor/dashboard" }],
+  }),
 });
 
 const NEARBY = [
