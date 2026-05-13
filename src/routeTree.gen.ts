@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RequestRouteImport } from './routes/request'
 import { Route as DonorRouteImport } from './routes/donor'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DonorIndexRouteImport } from './routes/donor.index'
@@ -48,6 +49,11 @@ const RequestRoute = RequestRouteImport.update({
 const DonorRoute = DonorRouteImport.update({
   id: '/donor',
   path: '/donor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -164,6 +170,7 @@ const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/auth': typeof AuthRoute
   '/donor': typeof DonorRouteWithChildren
   '/request': typeof RequestRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/request': typeof RequestRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
@@ -217,6 +225,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
+  '/auth': typeof AuthRoute
   '/donor': typeof DonorRouteWithChildren
   '/request': typeof RequestRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -246,6 +255,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/auth'
     | '/donor'
     | '/request'
     | '/sitemap.xml'
@@ -272,6 +282,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth'
     | '/request'
     | '/sitemap.xml'
     | '/admin/analytics'
@@ -298,6 +309,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/auth'
     | '/donor'
     | '/request'
     | '/sitemap.xml'
@@ -326,6 +338,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
+  AuthRoute: typeof AuthRoute
   DonorRoute: typeof DonorRouteWithChildren
   RequestRoute: typeof RequestRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -352,6 +365,13 @@ declare module '@tanstack/react-router' {
       path: '/donor'
       fullPath: '/donor'
       preLoaderRoute: typeof DonorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -579,6 +599,7 @@ const RequestRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
+  AuthRoute: AuthRoute,
   DonorRoute: DonorRouteWithChildren,
   RequestRoute: RequestRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
