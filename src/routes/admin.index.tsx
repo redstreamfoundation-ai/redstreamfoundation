@@ -19,7 +19,13 @@ export const Route = createFileRoute("/admin/")({
   component: Overview,
 });
 
-const STATS = [
+const STATS: Array<{
+  label: string;
+  value: string;
+  delta: string;
+  icon: React.ComponentType<{ className?: string }>;
+  tone: "primary" | "amber" | "emerald" | "neutral";
+}> = [
   {
     label: "Active emergencies",
     value: "12",
