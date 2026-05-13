@@ -1,0 +1,18 @@
+# Redstream Foundation
+
+> Delhi-based non-profit coordinating verified emergency blood donations across the NCR by connecting patients in urgent need with nearby volunteer donors.
+
+Redstream Foundation operates a 24/7 emergency blood-donor coordination platform. Patients (or their attendants) submit a verified request; coordinators verify hospital documents and notify a matched network of volunteer donors nearby. Donor identities and patient contacts are masked through Redstream's relay.
+
+## Pages
+
+- [Home](/): Overview of the emergency blood coordination platform, live activity, and impact.
+- [Request emergency blood](/request): Multi-step verified request flow for patients and attendants.
+- [Become a donor](/donor): Information for volunteers who want to join the donor network.
+- [Donor registration](/donor/register): Sign up with phone OTP, blood group, and locality.
+- [Donor availability](/donor/availability): Set weekday/weekend availability and donation radius.
+- [Donor dashboard](/donor/dashboard): Active status, impact metrics, and nearby requests.
+
+## Optional
+
+- [Operations console](/admin): Internal coordinator dashboard for verified staff.
