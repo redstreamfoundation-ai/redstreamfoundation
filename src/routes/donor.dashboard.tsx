@@ -9,6 +9,11 @@ import {
   Settings,
   Power,
   Phone,
+  MessageSquare,
+  Smartphone,
+  Moon,
+  Calendar,
+  X,
 } from "lucide-react";
 import { Logo } from "@/components/landing/Logo";
 import { useDonor } from "@/lib/donor-store";
@@ -48,6 +53,10 @@ function Dashboard() {
   const cooldownDays = daysUntil(eligibleOn);
   const cooldownPct = Math.min(100, Math.max(0, ((90 - cooldownDays) / 90) * 100));
 
+  const decision = state.lastDecision;
+  const setNotif = (k: keyof typeof state.notifications) =>
+    update({ notifications: { ...state.notifications, [k]: !state.notifications[k] } });
+
   return (
     <div className="min-h-screen bg-background pb-12">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur-md">
@@ -63,6 +72,45 @@ function Dashboard() {
       </header>
 
       <main className="mx-auto max-w-2xl px-5 pt-8">
+        {decision ? (
+          <div className="mb-5 flex items-start justify-between gap-3 rounded-2xl border border-border bg-secondary/60 p-4 animate-slide-up">
+            <div className="flex items-start gap-3">
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                {decision.kind === "later" ? (
+                  <Calendar className="h-4 w-4" />
+                ) : decision.kind === "declined" ? (
+                  <X className="h-4 w-4" />
+                ) : (
+                  <HeartPulse className="h-4 w-4" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-foreground">
+                  {decision.kind === "later"
+                    ? `Reminder set for ${decision.inHours}h`
+                    : decision.kind === "declined"
+                    ? "Marked unavailable for that request"
+                    : "Request accepted"}
+                </div>
+                <div className="mt-0.5 text-xs text-muted-foreground">
+                  {decision.kind === "later"
+                    ? "We'll ping you only if it's still open."
+                    : decision.kind === "declined"
+                    ? "Routed to the next nearest donor — no impact on your status."
+                    : "See coordination details for next steps."}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => update({ lastDecision: null })}
+              aria-label="Dismiss"
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-background"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : null}
+
         <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
           Welcome back
         </div>
@@ -213,16 +261,48 @@ function Dashboard() {
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold text-foreground">Notification settings</div>
               <div className="mt-0.5 text-xs text-muted-foreground">
-                Push, SMS, and quiet hours
+                Choose how Redstream reaches you for emergencies.
               </div>
             </div>
-            <Link
-              to="/donor/availability"
-              className="text-xs font-semibold text-primary"
-            >
-              Manage
-            </Link>
           </div>
+
+          <div className="mt-4 space-y-2">
+            <NotifRow
+              icon={Smartphone}
+              title="Push notifications"
+              hint="Instant alert on this device."
+              active={state.notifications.push}
+              onToggle={() => setNotif("push")}
+            />
+            <NotifRow
+              icon={MessageSquare}
+              title="SMS"
+              hint="Backup if the app is closed."
+              active={state.notifications.sms}
+              onToggle={() => setNotif("sms")}
+            />
+            <NotifRow
+              icon={Phone}
+              title="WhatsApp"
+              hint="Coordinator messages on WhatsApp."
+              active={state.notifications.whatsapp}
+              onToggle={() => setNotif("whatsapp")}
+            />
+            <NotifRow
+              icon={Moon}
+              title="Quiet hours (10 pm — 6 am)"
+              hint="Only critical sub-1-hour alerts during sleep."
+              active={state.notifications.quietHours}
+              onToggle={() => setNotif("quietHours")}
+            />
+          </div>
+
+          <Link
+            to="/donor/availability"
+            className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-primary"
+          >
+            Edit availability and radius <ChevronRight className="h-3 w-3" />
+          </Link>
         </section>
 
         <section className="mt-6 rounded-2xl border border-border bg-secondary/60 p-5">
@@ -244,6 +324,45 @@ function Dashboard() {
           </div>
         </section>
       </main>
+    </div>
+  );
+}
+
+function NotifRow({
+  icon: Icon,
+  title,
+  hint,
+  active,
+  onToggle,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  hint: string;
+  active: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-background p-3">
+      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-medium text-foreground">{title}</div>
+        <div className="mt-0.5 text-[11px] text-muted-foreground">{hint}</div>
+      </div>
+      <button
+        onClick={onToggle}
+        aria-label={`Toggle ${title}`}
+        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+          active ? "bg-primary" : "bg-secondary"
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform ${
+            active ? "translate-x-5" : "translate-x-0.5"
+          }`}
+        />
+      </button>
     </div>
   );
 }
