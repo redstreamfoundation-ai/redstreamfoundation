@@ -5,6 +5,25 @@ import { useDonor } from "@/lib/donor-store";
 
 export const Route = createFileRoute("/donor/availability")({
   component: Availability,
+  head: () => ({
+    meta: [
+      { title: "Set donor availability — Redstream Foundation" },
+      {
+        name: "description",
+        content:
+          "Choose the days, time slots, donation radius, and emergency-only mode for your Redstream donor profile in Delhi NCR.",
+      },
+      { property: "og:title", content: "Set donor availability — Redstream Foundation" },
+      {
+        property: "og:description",
+        content:
+          "Configure when and where you can respond to verified emergency blood requests.",
+      },
+      { property: "og:url", content: "https://redstreamfoundation.lovable.app/donor/availability" },
+      { name: "robots", content: "noindex" },
+    ],
+    links: [{ rel: "canonical", href: "https://redstreamfoundation.lovable.app/donor/availability" }],
+  }),
 });
 
 const SLOTS = [
