@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RequestRouteImport } from './routes/request'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RequestVerifyingRouteImport } from './routes/request.verifying'
 import { Route as RequestProofRouteImport } from './routes/request.proof'
 import { Route as RequestHospitalRouteImport } from './routes/request.hospital'
 import { Route as RequestBloodRouteImport } from './routes/request.blood'
@@ -24,6 +25,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const RequestVerifyingRoute = RequestVerifyingRouteImport.update({
+  id: '/verifying',
+  path: '/verifying',
+  getParentRoute: () => RequestRoute,
 } as any)
 const RequestProofRoute = RequestProofRouteImport.update({
   id: '/proof',
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/request/blood': typeof RequestBloodRoute
   '/request/hospital': typeof RequestHospitalRoute
   '/request/proof': typeof RequestProofRoute
+  '/request/verifying': typeof RequestVerifyingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/request/blood': typeof RequestBloodRoute
   '/request/hospital': typeof RequestHospitalRoute
   '/request/proof': typeof RequestProofRoute
+  '/request/verifying': typeof RequestVerifyingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,6 +70,7 @@ export interface FileRoutesById {
   '/request/blood': typeof RequestBloodRoute
   '/request/hospital': typeof RequestHospitalRoute
   '/request/proof': typeof RequestProofRoute
+  '/request/verifying': typeof RequestVerifyingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -71,6 +80,7 @@ export interface FileRouteTypes {
     | '/request/blood'
     | '/request/hospital'
     | '/request/proof'
+    | '/request/verifying'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -78,6 +88,7 @@ export interface FileRouteTypes {
     | '/request/blood'
     | '/request/hospital'
     | '/request/proof'
+    | '/request/verifying'
   id:
     | '__root__'
     | '/'
@@ -85,6 +96,7 @@ export interface FileRouteTypes {
     | '/request/blood'
     | '/request/hospital'
     | '/request/proof'
+    | '/request/verifying'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -107,6 +119,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/request/verifying': {
+      id: '/request/verifying'
+      path: '/verifying'
+      fullPath: '/request/verifying'
+      preLoaderRoute: typeof RequestVerifyingRouteImport
+      parentRoute: typeof RequestRoute
     }
     '/request/proof': {
       id: '/request/proof'
@@ -136,12 +155,14 @@ interface RequestRouteChildren {
   RequestBloodRoute: typeof RequestBloodRoute
   RequestHospitalRoute: typeof RequestHospitalRoute
   RequestProofRoute: typeof RequestProofRoute
+  RequestVerifyingRoute: typeof RequestVerifyingRoute
 }
 
 const RequestRouteChildren: RequestRouteChildren = {
   RequestBloodRoute: RequestBloodRoute,
   RequestHospitalRoute: RequestHospitalRoute,
   RequestProofRoute: RequestProofRoute,
+  RequestVerifyingRoute: RequestVerifyingRoute,
 }
 
 const RequestRouteWithChildren =
