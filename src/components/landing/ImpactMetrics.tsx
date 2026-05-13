@@ -1,8 +1,10 @@
+import { AnimatedCounter } from "./AnimatedCounter";
+
 const STATS = [
-  { value: "8,400+", label: "Active donors", hint: "Verified across NCR" },
-  { value: "2,150", label: "Lives supported", hint: "Since 2022" },
-  { value: "11 min", label: "Avg response time", hint: "Match to confirmation" },
-  { value: "42", label: "Delhi coverage zones", hint: "From Dwarka to Noida" },
+  { num: 8400, suffix: "+", label: "Active donors", hint: "Verified across NCR" },
+  { num: 2150, suffix: "", label: "Lives supported", hint: "Since 2022" },
+  { num: 11, suffix: " min", label: "Avg response time", hint: "Match to confirmation" },
+  { num: 42, suffix: "", label: "Delhi coverage zones", hint: "From Dwarka to Noida" },
 ];
 
 export function ImpactMetrics() {
@@ -13,10 +15,10 @@ export function ImpactMetrics() {
           {STATS.map((s) => (
             <div
               key={s.label}
-              className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-soft)] transition-shadow hover:shadow-[var(--shadow-elevated)] md:p-6"
+              className="group rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-soft)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-elevated)] md:p-6"
             >
               <div className="font-serif-display text-3xl text-foreground md:text-4xl">
-                {s.value}
+                <AnimatedCounter to={s.num} suffix={s.suffix} />
               </div>
               <div className="mt-2 text-sm font-medium text-foreground">{s.label}</div>
               <div className="mt-1 text-xs text-muted-foreground">{s.hint}</div>
