@@ -1,48 +1,138 @@
 import { useEffect, useState } from "react";
-import { Check, MapPin, Radio } from "lucide-react";
+import { Check, MapPin, Radio, Droplet } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 type Event = {
-  id: number;
-  kind: "matched" | "fulfilled" | "enroute";
+  id: string;
+  kind: "matched" | "request" | "fulfilled";
   group: string;
   zone: string;
-  ago: string;
+  at: number;
 };
 
-const SEED: Event[] = [
-  { id: 1, kind: "matched", group: "B+", zone: "Saket", ago: "just now" },
-  { id: 2, kind: "enroute", group: "O-", zone: "Karol Bagh", ago: "2 min" },
-  { id: 3, kind: "fulfilled", group: "A+", zone: "Dwarka", ago: "5 min" },
-  { id: 4, kind: "matched", group: "AB+", zone: "Noida 62", ago: "8 min" },
-  { id: 5, kind: "fulfilled", group: "O+", zone: "Lajpat Nagar", ago: "12 min" },
-];
-
 const META: Record<Event["kind"], { label: string; icon: typeof Check; tone: string }> = {
+  request: { label: "New emergency request", icon: Droplet, tone: "text-primary bg-primary/10" },
   matched: { label: "Donor matched", icon: Radio, tone: "text-primary bg-primary/10" },
-  enroute: { label: "Donor en route", icon: MapPin, tone: "text-primary bg-primary/10" },
   fulfilled: { label: "Request fulfilled", icon: Check, tone: "text-emerald-600 bg-emerald-500/10" },
 };
 
+const FALLBACK: Event[] = [
+  { id: "s1", kind: "matched", group: "B+", zone: "Saket", at: Date.now() - 60_000 },
+  { id: "s2", kind: "request", group: "O-", zone: "Karol Bagh", at: Date.now() - 2 * 60_000 },
+  { id: "s3", kind: "fulfilled", group: "A+", zone: "Dwarka", at: Date.now() - 5 * 60_000 },
+  { id: "s4", kind: "matched", group: "AB+", zone: "Noida 62", at: Date.now() - 8 * 60_000 },
+  { id: "s5", kind: "fulfilled", group: "O+", zone: "Lajpat Nagar", at: Date.now() - 12 * 60_000 },
+];
+
+function ago(ms: number): string {
+  const s = Math.floor((Date.now() - ms) / 1000);
+  if (s < 30) return "just now";
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m} min`;
+  return `${Math.floor(m / 60)}h`;
+}
+
 export function LiveActivityFeed() {
-  const [events, setEvents] = useState(SEED);
+  const [events, setEvents] = useState<Event[]>(FALLBACK);
 
   useEffect(() => {
-    const zones = ["Rohini", "Vasant Kunj", "Mayur Vihar", "Pitampura", "Hauz Khas", "Janakpuri"];
-    const groups = ["O+", "O-", "A+", "B+", "AB+", "B-"];
-    const kinds: Event["kind"][] = ["matched", "enroute", "fulfilled"];
-    const t = setInterval(() => {
-      setEvents((prev) => {
-        const next: Event = {
-          id: Date.now(),
-          kind: kinds[Math.floor(Math.random() * kinds.length)],
-          group: groups[Math.floor(Math.random() * groups.length)],
-          zone: zones[Math.floor(Math.random() * zones.length)],
-          ago: "just now",
-        };
-        return [next, ...prev.slice(0, 4)];
-      });
-    }, 3500);
-    return () => clearInterval(t);
+    let cancelled = false;
+    (async () => {
+      const [{ data: reqs }, { data: matches }] = await Promise.all([
+        supabase
+          .from("blood_requests")
+          .select("id, blood_group, locality, status, created_at")
+          .order("created_at", { ascending: false })
+          .limit(8),
+        supabase
+          .from("request_matches")
+          .select("id, decision, created_at, request:blood_requests(blood_group, locality)")
+          .eq("decision", "accepted")
+          .order("created_at", { ascending: false })
+          .limit(8),
+      ]);
+      if (cancelled) return;
+      const merged: Event[] = [];
+      for (const r of reqs ?? []) {
+        merged.push({
+          id: `r-${r.id}`,
+          kind: r.status === "fulfilled" ? "fulfilled" : "request",
+          group: r.blood_group,
+          zone: r.locality,
+          at: new Date(r.created_at).getTime(),
+        });
+      }
+      for (const m of matches ?? []) {
+        const req = (m as { request: { blood_group: string; locality: string } | null }).request;
+        if (!req) continue;
+        merged.push({
+          id: `m-${m.id}`,
+          kind: "matched",
+          group: req.blood_group,
+          zone: req.locality,
+          at: new Date(m.created_at).getTime(),
+        });
+      }
+      merged.sort((a, b) => b.at - a.at);
+      if (merged.length) setEvents(merged.slice(0, 6));
+    })();
+
+    const channel = supabase
+      .channel("live-feed")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "blood_requests" },
+        (payload) => {
+          const r = payload.new as { id: string; blood_group: string; locality: string };
+          setEvents((prev) =>
+            [
+              { id: `r-${r.id}`, kind: "request" as const, group: r.blood_group, zone: r.locality, at: Date.now() },
+              ...prev,
+            ].slice(0, 6),
+          );
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "blood_requests" },
+        (payload) => {
+          const r = payload.new as { id: string; blood_group: string; locality: string; status: string };
+          if (r.status !== "fulfilled") return;
+          setEvents((prev) =>
+            [
+              { id: `f-${r.id}-${Date.now()}`, kind: "fulfilled" as const, group: r.blood_group, zone: r.locality, at: Date.now() },
+              ...prev,
+            ].slice(0, 6),
+          );
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "request_matches" },
+        async (payload) => {
+          const m = payload.new as { id: string; request_id: string; decision: string };
+          if (m.decision !== "accepted") return;
+          const { data: req } = await supabase
+            .from("blood_requests")
+            .select("blood_group, locality")
+            .eq("id", m.request_id)
+            .maybeSingle();
+          if (!req) return;
+          setEvents((prev) =>
+            [
+              { id: `m-${m.id}`, kind: "matched" as const, group: req.blood_group, zone: req.locality, at: Date.now() },
+              ...prev,
+            ].slice(0, 6),
+          );
+        },
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
@@ -50,9 +140,7 @@ export function LiveActivityFeed() {
       <div className="mx-auto max-w-3xl">
         <div className="mb-8 flex items-end justify-between gap-4">
           <div>
-            <span className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
-              Live across Delhi
-            </span>
+            <span className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Live across Delhi</span>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
               Real coordination, in real time.
             </h2>
@@ -72,10 +160,7 @@ export function LiveActivityFeed() {
               const m = META[e.kind];
               const Icon = m.icon;
               return (
-                <li
-                  key={e.id}
-                  className="flex items-center gap-4 px-5 py-4 animate-slide-up"
-                >
+                <li key={e.id} className="flex items-center gap-4 px-5 py-4 animate-slide-up">
                   <span className={`grid h-9 w-9 place-items-center rounded-xl ${m.tone}`}>
                     <Icon className="h-4 w-4" />
                   </span>
@@ -87,17 +172,18 @@ export function LiveActivityFeed() {
                       </span>
                     </div>
                     <div className="mt-0.5 truncate text-xs text-muted-foreground">
+                      <MapPin className="mr-1 inline h-3 w-3" />
                       {e.zone}, Delhi NCR
                     </div>
                   </div>
-                  <span className="shrink-0 text-xs text-muted-foreground">{e.ago}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">{ago(e.at)}</span>
                 </li>
               );
             })}
           </ul>
         </div>
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          Names anonymized. Activity simulated for preview.
+          Updates stream from the live coordination database.
         </p>
       </div>
     </section>

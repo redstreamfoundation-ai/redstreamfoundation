@@ -13,6 +13,7 @@ export type RequestState = {
   attendantName: string;
   attendantPhone: string;
   proofUploaded: boolean;
+  requestId: string | null;
 };
 
 const DEFAULT: RequestState = {
@@ -26,6 +27,7 @@ const DEFAULT: RequestState = {
   attendantName: "",
   attendantPhone: "",
   proofUploaded: false,
+  requestId: null,
 };
 
 type Ctx = {

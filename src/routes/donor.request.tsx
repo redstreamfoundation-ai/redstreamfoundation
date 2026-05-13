@@ -1,8 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Check, Clock, MapPin, X, Calendar, Droplet, Building2, Navigation, BellRing } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StepShell } from "@/components/request/StepShell";
 import { useDonor } from "@/lib/donor-store";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/donor/request")({
   component: IncomingRequest,
@@ -21,19 +23,54 @@ export const Route = createFileRoute("/donor/request")({
 
 function IncomingRequest() {
   const navigate = useNavigate();
-  const { update } = useDonor();
+  const { state, update } = useDonor();
+  const { user, loading } = useAuth();
   const [laterOpen, setLaterOpen] = useState(false);
   const [confirmDecline, setConfirmDecline] = useState(false);
+  const [requestId, setRequestId] = useState<string | null>(state.activeRequestId);
+
+  useEffect(() => {
+    if (loading || !user || requestId) return;
+    (async () => {
+      const { data } = await supabase
+        .from("blood_requests")
+        .select("id")
+        .in("status", ["pending", "matching"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data) {
+        setRequestId(data.id);
+        update({ activeRequestId: data.id });
+      }
+    })();
+  }, [loading, user, requestId, update]);
+
+  const recordMatch = async (decision: "accepted" | "declined" | "later", inHours?: number) => {
+    if (!user || !requestId) return;
+    await supabase.from("request_matches").upsert(
+      {
+        request_id: requestId,
+        donor_user_id: user.id,
+        decision,
+        available_in_hours: inHours ?? null,
+      },
+      { onConflict: "request_id,donor_user_id" },
+    );
+  };
 
   const accept = () => {
+    void recordMatch("accepted");
     update({ lastDecision: { kind: "accepted", at: Date.now() } });
     navigate({ to: "/donor/coordinate" });
   };
   const decline = () => {
+    void recordMatch("declined");
     update({ lastDecision: { kind: "declined", at: Date.now() } });
     navigate({ to: "/donor/dashboard" });
   };
   const scheduleLater = (inHours: number) => {
+    void recordMatch("later", inHours);
     update({ lastDecision: { kind: "later", at: Date.now(), inHours } });
     navigate({ to: "/donor/dashboard" });
   };

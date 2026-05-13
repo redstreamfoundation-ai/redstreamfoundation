@@ -23,6 +23,7 @@ export type DonorState = {
     | { kind: "accepted"; at: number }
     | { kind: "declined"; at: number }
     | { kind: "later"; at: number; inHours: number };
+  activeRequestId: string | null;
 };
 
 const DEFAULT: DonorState = {
@@ -43,6 +44,7 @@ const DEFAULT: DonorState = {
   active: true,
   notifications: { push: true, sms: true, whatsapp: false, quietHours: false },
   lastDecision: null,
+  activeRequestId: null,
 };
 
 type Ctx = {

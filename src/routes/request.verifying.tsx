@@ -2,6 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Check, FileSearch, ShieldCheck, Radio, Phone } from "lucide-react";
 import { StepShell } from "@/components/request/StepShell";
+import { useRequest } from "@/lib/request-store";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/request/verifying")({
   component: Verifying,
@@ -15,7 +18,48 @@ const STEPS = [
 
 function Verifying() {
   const navigate = useNavigate();
+  const { state, update } = useRequest();
+  const { user, loading } = useAuth();
   const [stage, setStage] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      navigate({
+        to: "/auth",
+        search: { redirect: "/request/verifying" },
+        replace: true,
+      });
+      return;
+    }
+    if (state.requestId || !state.urgency) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("blood_requests")
+        .insert({
+          created_by: user.id,
+          blood_group: state.bloodGroup,
+          component: state.component,
+          units: state.units,
+          urgency: state.urgency as "critical" | "within-2h" | "within-24h" | "planned",
+          hospital: state.hospital,
+          locality: state.locality,
+          patient_age: state.patientAge || null,
+          attendant_name: state.attendantName || "Attendant",
+          attendant_phone: state.attendantPhone,
+          proof_uploaded: state.proofUploaded,
+          status: "matching",
+        })
+        .select("id")
+        .single();
+      if (error) {
+        setError(error.message);
+        return;
+      }
+      update({ requestId: data.id });
+    })();
+  }, [loading, user, state, update, navigate]);
 
   useEffect(() => {
     const t1 = setTimeout(() => setStage(1), 1600);
@@ -81,6 +125,12 @@ function Verifying() {
           );
         })}
       </div>
+
+      {error ? (
+        <div className="mt-4 rounded-2xl border border-primary/30 bg-primary/5 p-3 text-xs text-foreground">
+          Couldn't save your request: {error}
+        </div>
+      ) : null}
 
       <a
         href="tel:+911140000000"
