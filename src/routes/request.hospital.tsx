@@ -19,6 +19,7 @@ function HospitalStep() {
   return (
     <StepShell
       step={2}
+      total={4}
       eyebrow="Hospital details"
       title="Where is the patient?"
       subtitle="We share these only with verified, matched donors."
