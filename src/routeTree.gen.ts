@@ -20,6 +20,7 @@ import { Route as RequestConfirmedRouteImport } from './routes/request.confirmed
 import { Route as RequestCompletedRouteImport } from './routes/request.completed'
 import { Route as RequestBloodRouteImport } from './routes/request.blood'
 import { Route as DonorRegisterRouteImport } from './routes/donor.register'
+import { Route as DonorDashboardRouteImport } from './routes/donor.dashboard'
 import { Route as DonorAvailabilityRouteImport } from './routes/donor.availability'
 
 const RequestRoute = RequestRouteImport.update({
@@ -77,6 +78,11 @@ const DonorRegisterRoute = DonorRegisterRouteImport.update({
   path: '/donor/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DonorDashboardRoute = DonorDashboardRouteImport.update({
+  id: '/donor/dashboard',
+  path: '/donor/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DonorAvailabilityRoute = DonorAvailabilityRouteImport.update({
   id: '/donor/availability',
   path: '/donor/availability',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/request': typeof RequestRouteWithChildren
   '/donor/availability': typeof DonorAvailabilityRoute
+  '/donor/dashboard': typeof DonorDashboardRoute
   '/donor/register': typeof DonorRegisterRoute
   '/request/blood': typeof RequestBloodRoute
   '/request/completed': typeof RequestCompletedRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/request': typeof RequestRouteWithChildren
   '/donor/availability': typeof DonorAvailabilityRoute
+  '/donor/dashboard': typeof DonorDashboardRoute
   '/donor/register': typeof DonorRegisterRoute
   '/request/blood': typeof RequestBloodRoute
   '/request/completed': typeof RequestCompletedRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/request': typeof RequestRouteWithChildren
   '/donor/availability': typeof DonorAvailabilityRoute
+  '/donor/dashboard': typeof DonorDashboardRoute
   '/donor/register': typeof DonorRegisterRoute
   '/request/blood': typeof RequestBloodRoute
   '/request/completed': typeof RequestCompletedRoute
@@ -132,6 +141,7 @@ export interface FileRouteTypes {
     | '/'
     | '/request'
     | '/donor/availability'
+    | '/donor/dashboard'
     | '/donor/register'
     | '/request/blood'
     | '/request/completed'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/'
     | '/request'
     | '/donor/availability'
+    | '/donor/dashboard'
     | '/donor/register'
     | '/request/blood'
     | '/request/completed'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/'
     | '/request'
     | '/donor/availability'
+    | '/donor/dashboard'
     | '/donor/register'
     | '/request/blood'
     | '/request/completed'
@@ -175,6 +187,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RequestRoute: typeof RequestRouteWithChildren
   DonorAvailabilityRoute: typeof DonorAvailabilityRoute
+  DonorDashboardRoute: typeof DonorDashboardRoute
   DonorRegisterRoute: typeof DonorRegisterRoute
   DonorIndexRoute: typeof DonorIndexRoute
 }
@@ -258,6 +271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DonorRegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/donor/dashboard': {
+      id: '/donor/dashboard'
+      path: '/donor/dashboard'
+      fullPath: '/donor/dashboard'
+      preLoaderRoute: typeof DonorDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/donor/availability': {
       id: '/donor/availability'
       path: '/donor/availability'
@@ -295,6 +315,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RequestRoute: RequestRouteWithChildren,
   DonorAvailabilityRoute: DonorAvailabilityRoute,
+  DonorDashboardRoute: DonorDashboardRoute,
   DonorRegisterRoute: DonorRegisterRoute,
   DonorIndexRoute: DonorIndexRoute,
 }
