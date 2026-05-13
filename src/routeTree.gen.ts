@@ -19,6 +19,7 @@ import { Route as RequestHospitalRouteImport } from './routes/request.hospital'
 import { Route as RequestConfirmedRouteImport } from './routes/request.confirmed'
 import { Route as RequestCompletedRouteImport } from './routes/request.completed'
 import { Route as RequestBloodRouteImport } from './routes/request.blood'
+import { Route as DonorRequestRouteImport } from './routes/donor.request'
 import { Route as DonorRegisterRouteImport } from './routes/donor.register'
 import { Route as DonorDashboardRouteImport } from './routes/donor.dashboard'
 import { Route as DonorAvailabilityRouteImport } from './routes/donor.availability'
@@ -73,6 +74,11 @@ const RequestBloodRoute = RequestBloodRouteImport.update({
   path: '/blood',
   getParentRoute: () => RequestRoute,
 } as any)
+const DonorRequestRoute = DonorRequestRouteImport.update({
+  id: '/donor/request',
+  path: '/donor/request',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DonorRegisterRoute = DonorRegisterRouteImport.update({
   id: '/donor/register',
   path: '/donor/register',
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/donor/availability': typeof DonorAvailabilityRoute
   '/donor/dashboard': typeof DonorDashboardRoute
   '/donor/register': typeof DonorRegisterRoute
+  '/donor/request': typeof DonorRequestRoute
   '/request/blood': typeof RequestBloodRoute
   '/request/completed': typeof RequestCompletedRoute
   '/request/confirmed': typeof RequestConfirmedRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/donor/availability': typeof DonorAvailabilityRoute
   '/donor/dashboard': typeof DonorDashboardRoute
   '/donor/register': typeof DonorRegisterRoute
+  '/donor/request': typeof DonorRequestRoute
   '/request/blood': typeof RequestBloodRoute
   '/request/completed': typeof RequestCompletedRoute
   '/request/confirmed': typeof RequestConfirmedRoute
@@ -126,6 +134,7 @@ export interface FileRoutesById {
   '/donor/availability': typeof DonorAvailabilityRoute
   '/donor/dashboard': typeof DonorDashboardRoute
   '/donor/register': typeof DonorRegisterRoute
+  '/donor/request': typeof DonorRequestRoute
   '/request/blood': typeof RequestBloodRoute
   '/request/completed': typeof RequestCompletedRoute
   '/request/confirmed': typeof RequestConfirmedRoute
@@ -143,6 +152,7 @@ export interface FileRouteTypes {
     | '/donor/availability'
     | '/donor/dashboard'
     | '/donor/register'
+    | '/donor/request'
     | '/request/blood'
     | '/request/completed'
     | '/request/confirmed'
@@ -158,6 +168,7 @@ export interface FileRouteTypes {
     | '/donor/availability'
     | '/donor/dashboard'
     | '/donor/register'
+    | '/donor/request'
     | '/request/blood'
     | '/request/completed'
     | '/request/confirmed'
@@ -173,6 +184,7 @@ export interface FileRouteTypes {
     | '/donor/availability'
     | '/donor/dashboard'
     | '/donor/register'
+    | '/donor/request'
     | '/request/blood'
     | '/request/completed'
     | '/request/confirmed'
@@ -189,6 +201,7 @@ export interface RootRouteChildren {
   DonorAvailabilityRoute: typeof DonorAvailabilityRoute
   DonorDashboardRoute: typeof DonorDashboardRoute
   DonorRegisterRoute: typeof DonorRegisterRoute
+  DonorRequestRoute: typeof DonorRequestRoute
   DonorIndexRoute: typeof DonorIndexRoute
 }
 
@@ -264,6 +277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RequestBloodRouteImport
       parentRoute: typeof RequestRoute
     }
+    '/donor/request': {
+      id: '/donor/request'
+      path: '/donor/request'
+      fullPath: '/donor/request'
+      preLoaderRoute: typeof DonorRequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/donor/register': {
       id: '/donor/register'
       path: '/donor/register'
@@ -317,6 +337,7 @@ const rootRouteChildren: RootRouteChildren = {
   DonorAvailabilityRoute: DonorAvailabilityRoute,
   DonorDashboardRoute: DonorDashboardRoute,
   DonorRegisterRoute: DonorRegisterRoute,
+  DonorRequestRoute: DonorRequestRoute,
   DonorIndexRoute: DonorIndexRoute,
 }
 export const routeTree = rootRouteImport
