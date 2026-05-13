@@ -18,6 +18,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as RequestIndexRouteImport } from './routes/request.index'
 import { Route as DonorIndexRouteImport } from './routes/donor.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as RequestReviewRouteImport } from './routes/request.review'
 import { Route as RequestProofRouteImport } from './routes/request.proof'
 import { Route as RequestMatchingRouteImport } from './routes/request.matching'
 import { Route as RequestHospitalRouteImport } from './routes/request.hospital'
@@ -80,6 +81,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminRoute,
+} as any)
+const RequestReviewRoute = RequestReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => RequestRoute,
 } as any)
 const RequestProofRoute = RequestProofRouteImport.update({
   id: '/proof',
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/request/hospital': typeof RequestHospitalRoute
   '/request/matching': typeof RequestMatchingRoute
   '/request/proof': typeof RequestProofRoute
+  '/request/review': typeof RequestReviewRoute
   '/admin/': typeof AdminIndexRoute
   '/donor/': typeof DonorIndexRoute
   '/request/': typeof RequestIndexRoute
@@ -216,6 +223,7 @@ export interface FileRoutesByTo {
   '/request/hospital': typeof RequestHospitalRoute
   '/request/matching': typeof RequestMatchingRoute
   '/request/proof': typeof RequestProofRoute
+  '/request/review': typeof RequestReviewRoute
   '/admin': typeof AdminIndexRoute
   '/donor': typeof DonorIndexRoute
   '/request': typeof RequestIndexRoute
@@ -245,6 +253,7 @@ export interface FileRoutesById {
   '/request/hospital': typeof RequestHospitalRoute
   '/request/matching': typeof RequestMatchingRoute
   '/request/proof': typeof RequestProofRoute
+  '/request/review': typeof RequestReviewRoute
   '/admin/': typeof AdminIndexRoute
   '/donor/': typeof DonorIndexRoute
   '/request/': typeof RequestIndexRoute
@@ -275,6 +284,7 @@ export interface FileRouteTypes {
     | '/request/hospital'
     | '/request/matching'
     | '/request/proof'
+    | '/request/review'
     | '/admin/'
     | '/donor/'
     | '/request/'
@@ -300,6 +310,7 @@ export interface FileRouteTypes {
     | '/request/hospital'
     | '/request/matching'
     | '/request/proof'
+    | '/request/review'
     | '/admin'
     | '/donor'
     | '/request'
@@ -328,6 +339,7 @@ export interface FileRouteTypes {
     | '/request/hospital'
     | '/request/matching'
     | '/request/proof'
+    | '/request/review'
     | '/admin/'
     | '/donor/'
     | '/request/'
@@ -406,6 +418,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/request/review': {
+      id: '/request/review'
+      path: '/review'
+      fullPath: '/request/review'
+      preLoaderRoute: typeof RequestReviewRouteImport
+      parentRoute: typeof RequestRoute
     }
     '/request/proof': {
       id: '/request/proof'
@@ -578,6 +597,7 @@ interface RequestRouteChildren {
   RequestHospitalRoute: typeof RequestHospitalRoute
   RequestMatchingRoute: typeof RequestMatchingRoute
   RequestProofRoute: typeof RequestProofRoute
+  RequestReviewRoute: typeof RequestReviewRoute
   RequestIndexRoute: typeof RequestIndexRoute
 }
 
@@ -588,6 +608,7 @@ const RequestRouteChildren: RequestRouteChildren = {
   RequestHospitalRoute: RequestHospitalRoute,
   RequestMatchingRoute: RequestMatchingRoute,
   RequestProofRoute: RequestProofRoute,
+  RequestReviewRoute: RequestReviewRoute,
   RequestIndexRoute: RequestIndexRoute,
 }
 
