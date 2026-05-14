@@ -34,25 +34,36 @@ export const registerDonorFromChat = createServerFn({ method: "POST" })
       }
     }
 
-    const { error } = await supabase.from("donors").upsert(
-      {
-        user_id: userId,
-        full_name: data.full_name,
-        phone: data.phone,
-        blood_group: data.blood_group,
-        age: data.age,
-        locality: data.locality,
-        pincode: "",
-        availability: data.availability,
-        last_donation_date: lastDonation,
-        id_proof_url: data.id_proof_url,
-        status: "pending",
-      },
-      { onConflict: "user_id" },
-    );
+    const payload = {
+      user_id: userId,
+      full_name: data.full_name,
+      phone: data.phone,
+      blood_group: data.blood_group,
+      age: data.age,
+      locality: data.locality,
+      pincode: "",
+      availability: data.availability,
+      last_donation_date: lastDonation,
+      id_proof_url: data.id_proof_url,
+      status: "pending",
+    };
 
+    const { data: existing, error: selErr } = await supabase
+      .from("donors")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (selErr) {
+      console.error("registerDonorFromChat select error", selErr);
+      throw new Error(selErr.message || "Could not check existing donor.");
+    }
+
+    const op = existing
+      ? supabase.from("donors").update(payload).eq("user_id", userId)
+      : supabase.from("donors").insert(payload);
+    const { error } = await op;
     if (error) {
-      console.error("registerDonorFromChat insert error", error);
+      console.error("registerDonorFromChat write error", error);
       throw new Error(error.message || "Could not save donor registration.");
     }
 
