@@ -22,6 +22,9 @@ import {
   ChevronLeft,
   ChevronRight,
   ScrollText,
+  Pencil,
+  Trash2,
+  X,
 } from "lucide-react";
 import {
   adminListDonors,
@@ -31,6 +34,8 @@ import {
   adminGetRequestDetail,
   adminGetStats,
   adminListAudit,
+  adminUpdateDonor,
+  adminDeleteDonor,
 } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
