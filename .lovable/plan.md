@@ -1,73 +1,76 @@
-## Root cause of the broken button
 
-`src/routes/request.tsx` is a layout route that renders only `<RequestProvider><Outlet/></RequestProvider>`. There is no `src/routes/request.index.tsx`, so navigating to `/request` matches the layout but renders nothing — the page appears blank/broken when "Request blood" is clicked from the Hero.
+## Status: not good to go — dev server is currently failing
 
-Today's flow also jumps Hero → `/request/blood` (a form) with no onboarding, no review step, no submitted screen, and the progress tracker is hard-coded to 3 steps.
-
-## New flow (8 screens)
+I checked the live dev-server logs and the app is not booting. The optimizer is throwing on TanStack Start virtual imports:
 
 ```
-/request                  Step 0 — Emergency intro (new, fixes the bug)
-/request/blood            Step 1 — Blood requirement (existing, retune progress)
-/request/hospital         Step 2 — Hospital info (existing, retune progress)
-/request/proof            Step 3 — Medical proof (existing, retune progress)
-/request/review           Step 4 — Review & confirm (NEW)
-/request/submitted        Step 5 — Submitted + verification timeline (NEW;
-                                   creates the DB row, shows request ID,
-                                   then auto-advances to matching)
-/request/matching         Step 6 — Live donor matching (existing, polish)
-/request/confirmed        Step 7 — Donor confirmed (existing)
-/request/completed        Closing screen (existing)
+✘ Could not resolve "#tanstack-start-entry"
+✘ Could not resolve "#tanstack-start-plugin-adapters"
+✘ Could not resolve "tanstack-start-manifest:v"
+✘ Could not resolve "tanstack-start-injected-head-scripts:v"
+   in node_modules/@tanstack/start-server-core/...
 ```
 
-`request/verifying.tsx` is replaced by `request/submitted.tsx` (same DB-insert logic, richer operational UI). Hero "Request blood" CTA now points to `/request` (the intro), not `/request/blood`.
+Root cause: in the previous turn I added `optimizeDeps.force: true` to `vite.config.ts` plus a `predev` script that wipes `.vite`. That combination forces Vite/esbuild to pre-bundle `@tanstack/start-server-core`, which only resolves through virtual imports injected by the TanStack Start Vite plugin at runtime. Forcing pre-bundling makes esbuild try to resolve them at bundle time and fail.
 
-## Files to add
+Until this is fixed, no UI / fonts / clicks / animations will render at all in preview, so a "good to go" review cannot be completed.
 
-- `src/routes/request.index.tsx` — Emergency Introduction screen
-  - Headline "Emergency Blood Request Coordination"
-  - Subheadline about coordinator verification
-  - Three trust cards: Verified Process, Nearby Matching, Privacy Protected
-  - Primary CTA "Continue Emergency Request" → `/request/blood`
-  - Secondary "Call helpline" link
-- `src/routes/request.review.tsx` — Review & Confirm
-  - Reads from `useRequest()` and renders summary cards: blood group + units + component, urgency, hospital + locality, attendant + masked phone, proof status
-  - Edit links jumping back to each step
-  - Primary CTA "Submit Emergency Request" → `/request/submitted`
-  - Disabled if any required field missing (with inline missing-field hints)
-- `src/routes/request.submitted.tsx` — Submitted + verifying
-  - Performs the Supabase `blood_requests` insert that today lives in `verifying.tsx`
-  - Displays the generated Request ID (short form), "Verification in progress", est. review time
-  - Operational timeline: Submitted → Under Review → Donor Matching → Donor Confirmed (animated state progression)
-  - Helpline CTA
-  - Auto-navigates to `/request/matching` once the timeline completes
-- `src/routes/request.confirmation.tsx` — not needed (covered by submitted + matching)
+## Plan
 
-## Files to edit
+### Step 1 — Restore a working dev server (must do first)
 
-- `src/routes/request.tsx` — keep RequestProvider/Outlet, no logic change
-- `src/routes/request.blood.tsx` — bump `<StepShell step={1} total={4} />`
-- `src/routes/request.hospital.tsx` — `step={2} total={4}`
-- `src/routes/request.proof.tsx` — `step={3} total={4}`, change CTA target to `/request/review`
-- `src/components/request/StepShell.tsx` — accept dynamic `total` (already does); add labeled step pills (Requirement · Hospital · Proof · Review) under the progress bars for clarity
-- `src/components/landing/Hero.tsx` — change `<Link to="/request">` so the "Request blood" CTA hits the new intro (already `/request`, but verify it isn't redirecting to `/request/blood` anywhere; keep as `/request`)
-- `src/routes/request.verifying.tsx` — DELETE (logic moves into `submitted.tsx`)
-- `src/lib/request-store.tsx` — no schema change needed; `requestId` already there
+In `vite.config.ts`:
+- Remove `optimizeDeps.force: true`.
+- Add `optimizeDeps.exclude: ["@tanstack/start-server-core", "@tanstack/react-start", "@tanstack/start-client-core"]` so the optimizer never tries to pre-bundle TanStack Start internals.
+- Keep the `startupDiagnosticsPlugin` (it's harmless and useful for future failures).
 
-## Routing/typing
+In `package.json`:
+- Replace the aggressive `predev` cache wipe with a narrower one that only clears `node_modules/.vite/deps` (the dependency-optimizer cache), not the whole `.vite` directory. This keeps the user-requested "auto-clear stale cache" behavior without blowing away artifacts the TanStack Router plugin needs.
 
-After adding/removing route files, the TanStack Router Vite plugin will regenerate `routeTree.gen.ts` automatically — no manual edit. All `navigate({ to: ... })` and `<Link to=...>` calls will be type-checked against the new tree.
+Confirm green by tailing daemon logs until Vite reports `ready in …` with no esbuild errors.
 
-## Design rules
+### Step 2 — Full QA pass (only after Step 1 is green)
 
-- Mobile-first, semantic tokens only (`bg-card`, `text-foreground`, `border-border`, `var(--shadow-soft)`, `var(--gradient-emergency)`, etc.) — matches existing `StepShell` system.
-- Reuse `StepShell`, `PrimaryButton`, and existing icon set (lucide).
-- Operational microcopy on every screen explains what's happening + what's next.
-- Progress tracker visible on steps 1–4; steps 0/5/6/7 use the `showBack=false` operational header.
+Routes to walk through in preview, in this order, capturing screenshots and console/network logs:
 
-## What this does NOT change
+```text
+/                       → landing (Hero, animations, CTAs)
+/auth                   → login + signup, Google OAuth button
+/donor                  → donor hub
+/donor/register         → form validation, blood group, locality
+/donor/availability     → toggles, sliders persist
+/donor/dashboard        → data loads from donors table
+/request                → request hub
+/request/blood          → blood group, units, urgency
+/request/hospital       → hospital + locality combobox
+/request/proof          → upload
+/request/review         → summary
+/request/submitted      → confirmation
+/request/matching       → live matches
+/admin                  → Donors, Patient Requests, Settings, Matched Donors
+/privacy                → legal copy
+```
 
-- Database schema, RLS policies, auth flow, donor flows, admin flows, landing-page sections — all untouched.
-- Realtime activity feed and matching simulation timing remain as-is (only minor copy polish in matching).
+For each route, verify:
+- **Render** — no blank screen, no React error boundary, no 404.
+- **Clicks / nav** — every `<Link>` resolves to an existing route file.
+- **Forms** — required fields validate, submit succeeds, Supabase row appears.
+- **Auth gating** — `_authenticated` parents redirect anonymous users.
+- **Data** — admin tables populate from `donors`, `blood_requests`, `app_settings`.
+- **Fonts** — heading + body fonts load (no FOUT, no fallback to system).
+- **Graphics** — logo, hero, coverage map, icons render at correct sizes.
+- **Animations** — Hero, AnimatedCounter, MatchingWave, LiveActivityFeed, DelhiTicker run without jank.
+- **Console** — zero errors, zero warnings other than known dev-only ones.
+- **Network** — no 4xx/5xx on Supabase calls; RLS denials surface as friendly UI states, not crashes.
+- **Responsive** — recheck at 375 / 768 / 1280 widths.
+- **SEO** — each route has unique `<title>` and meta description in `head()`.
 
-Ready to implement on approval.
+### Step 3 — Report
+
+Produce a single checklist of pass / fail per route + per category, with screenshots and any concrete bugs found, then fix them in a follow-up build-mode turn.
+
+## Technical details
+
+- The TanStack Start Vite plugin owns the virtual modules `#tanstack-start-entry`, `#tanstack-start-plugin-adapters`, `tanstack-start-manifest:v`, and `tanstack-start-injected-head-scripts:v`. They must stay outside `optimizeDeps`.
+- `optimizeDeps.force` is the wrong tool for "clear stale cache on start" because it runs the optimizer over packages that opt out of pre-bundling. The right tool is deleting `node_modules/.vite/deps` before launch (which Vite then rebuilds lazily on demand) — never combined with `force: true`.
+- `startupDiagnosticsPlugin` stays as-is so the next failure surfaces a real stack instead of "did not become healthy within 45s".

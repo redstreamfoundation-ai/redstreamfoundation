@@ -38,10 +38,16 @@ function startupDiagnosticsPlugin() {
 }
 
 export default defineConfig({
-  // Force re-bundling deps on each dev start to avoid stale optimizer
-  // caches that reference TanStack Start internals after upgrades.
+  // Keep TanStack Start internals out of Vite's dep optimizer — they rely
+  // on virtual imports injected by the TanStack Start plugin at runtime
+  // (#tanstack-start-entry, tanstack-start-manifest:v, etc.) and esbuild
+  // cannot resolve them at pre-bundle time.
   optimizeDeps: {
-    force: true,
+    exclude: [
+      "@tanstack/start-server-core",
+      "@tanstack/react-start",
+      "@tanstack/start-client-core",
+    ],
   },
   plugins: [
     startupDiagnosticsPlugin(),
