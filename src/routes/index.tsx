@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import logoSrc from "@/assets/redstream-logo.png";
 
 export const Route = createFileRoute("/")({
@@ -25,6 +26,23 @@ export const Route = createFileRoute("/")({
 });
 
 function ComingSoon() {
+  const navigate = useNavigate();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const host = window.location.hostname;
+    const isLiveDomain =
+      host === "redstreamfoundation.org" ||
+      host === "www.redstreamfoundation.org";
+    if (!isLiveDomain) {
+      navigate({ to: "/home", replace: true });
+    } else {
+      setReady(true);
+    }
+  }, [navigate]);
+
+  if (!ready) return null;
+
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--gradient-soft)] px-6 page-fade">
       <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
@@ -66,9 +84,9 @@ function ComingSoon() {
 
         <Link
           to="/home"
-          className="mt-6 inline-block text-xs text-muted-foreground/60 underline-offset-4 hover:text-muted-foreground hover:underline"
+          className="mt-8 inline-flex items-center justify-center rounded-full border border-primary/30 bg-primary/10 px-5 py-2 text-sm font-medium text-primary transition hover:bg-primary hover:text-primary-foreground"
         >
-          Preview site
+          Preview Site
         </Link>
       </div>
     </main>
