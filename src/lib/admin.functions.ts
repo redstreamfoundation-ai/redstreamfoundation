@@ -171,7 +171,7 @@ export const adminUpdateRequest = createServerFn({ method: "POST" })
         locality: data.locality,
         units: data.units,
         component: data.component,
-        urgency: data.urgency,
+        urgency: data.urgency as "critical" | "planned" | "within-24h" | "within-2h",
         patient_age: data.patient_age,
       })
       .eq("id", data.id);
