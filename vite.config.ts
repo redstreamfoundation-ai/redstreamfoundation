@@ -5,9 +5,6 @@ import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  optimizeDeps: {
-    exclude: ["@tanstack/start-server-core"],
-  },
   plugins: [
     tanstackRouter({
       target: "react",
