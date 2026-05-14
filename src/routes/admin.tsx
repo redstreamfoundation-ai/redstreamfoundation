@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   Droplet,
   ShieldCheck,
@@ -15,6 +15,13 @@ import {
   Building2,
   Clock,
   HeartPulse,
+  Search,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  ChevronLeft,
+  ChevronRight,
+  ScrollText,
 } from "lucide-react";
 import {
   adminLogin,
@@ -24,6 +31,7 @@ import {
   adminUpdateRequestStatus,
   adminGetRequestDetail,
   adminGetStats,
+  adminListAudit,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
