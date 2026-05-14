@@ -186,7 +186,7 @@ function LoginScreen() {
 }
 
 function Dashboard({ onLogout }: { onLogout: () => void }) {
-  const [tab, setTab] = useState<"donors" | "requests" | "audit">("donors");
+  const [tab, setTab] = useState<"donors" | "requests" | "audit" | "settings">("donors");
   const [stats, setStats] = useState<Stats>({
     totalDonors: 0,
     pendingDonors: 0,
@@ -247,12 +247,15 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           <TabButton active={tab === "donors"} onClick={() => setTab("donors")} icon={Users}>Donors</TabButton>
           <TabButton active={tab === "requests"} onClick={() => setTab("requests")} icon={Inbox}>Patient requests</TabButton>
           <TabButton active={tab === "audit"} onClick={() => setTab("audit")} icon={ScrollText}>Audit log</TabButton>
+          <TabButton active={tab === "settings"} onClick={() => setTab("settings")} icon={SettingsIcon}>Settings</TabButton>
         </div>
 
         {tab === "donors" ? (
           <DonorsTab onChange={loadStats} onUnauthorized={onLogout} />
         ) : tab === "audit" ? (
           <AuditTab onUnauthorized={onLogout} />
+        ) : tab === "settings" ? (
+          <SettingsTab onUnauthorized={onLogout} />
         ) : openRequest ? (
           <RequestDetail
             
