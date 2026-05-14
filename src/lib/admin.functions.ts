@@ -261,3 +261,72 @@ export const adminListAudit = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { entries: rows ?? [] };
   });
+
+export const adminGetSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdminRole(context.userId);
+    const { data, error } = await supabaseAdmin
+      .from("app_settings")
+      .select("*")
+      .eq("singleton", true)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data) {
+      const { data: created, error: insErr } = await supabaseAdmin
+        .from("app_settings")
+        .insert({ singleton: true })
+        .select("*")
+        .single();
+      if (insErr) throw new Error(insErr.message);
+      return { settings: created };
+    }
+    return { settings: data };
+  });
+
+export const adminUpdateSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: {
+    notify_push: boolean;
+    notify_sms: boolean;
+    notify_whatsapp: boolean;
+    notify_email_digest: boolean;
+    default_radius_km: number;
+    max_radius_km: number;
+    auto_expand: boolean;
+    mask_contacts: boolean;
+    hide_exact_location: boolean;
+    requisition_retention_days: number;
+  }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAdminRole(context.userId);
+    const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, Math.round(n)));
+    const payload = {
+      notify_push: !!data.notify_push,
+      notify_sms: !!data.notify_sms,
+      notify_whatsapp: !!data.notify_whatsapp,
+      notify_email_digest: !!data.notify_email_digest,
+      default_radius_km: clamp(data.default_radius_km, 2, 15),
+      max_radius_km: clamp(data.max_radius_km, 5, 25),
+      auto_expand: !!data.auto_expand,
+      mask_contacts: !!data.mask_contacts,
+      hide_exact_location: !!data.hide_exact_location,
+      requisition_retention_days: clamp(data.requisition_retention_days, 7, 180),
+      updated_by: context.userId,
+    };
+    const { data: updated, error } = await supabaseAdmin
+      .from("app_settings")
+      .update(payload)
+      .eq("singleton", true)
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("admin_audit_log").insert({
+      action: "edit",
+      target_type: "settings",
+      target_id: updated.id,
+      target_label: "Operations & Safety controls",
+      actor: await actorEmail(context.userId),
+    });
+    return { settings: updated };
+  });
