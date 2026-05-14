@@ -905,8 +905,8 @@ function RequestsTab({
 }
 
 function RequestActions({
-  status, onApprove, onReject, onFulfill, onEdit, busy,
-}: { status: string; onApprove: () => void; onReject: () => void; onFulfill: () => void; onEdit: () => void; busy: boolean }) {
+  status, onApprove, onReject, onFulfill, onEdit, onDelete, busy,
+}: { status: string; onApprove: () => void; onReject: () => void; onFulfill: () => void; onEdit: () => void; onDelete?: () => void; busy: boolean }) {
   return (
     <div className="flex items-center justify-end gap-1.5 flex-wrap">
       {status !== "approved" && status !== "fulfilled" ? (
@@ -927,6 +927,11 @@ function RequestActions({
       <button onClick={onEdit} disabled={busy} className="inline-flex items-center gap-1 rounded-md border border-border bg-white px-2 py-1 text-[11px] font-semibold text-foreground hover:bg-secondary disabled:opacity-50">
         <Pencil className="h-3 w-3" /> Edit
       </button>
+      {onDelete ? (
+        <button onClick={onDelete} disabled={busy} className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50">
+          <Trash2 className="h-3 w-3" /> Delete
+        </button>
+      ) : null}
     </div>
   );
 }
