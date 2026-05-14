@@ -11,4 +11,25 @@ export default defineConfig({
     tsconfigPaths(),
     tailwindcss(),
   ],
+  optimizeDeps: {
+    exclude: [
+      "@tanstack/start-server-core",
+      "@tanstack/start-client-core",
+      "@tanstack/react-start",
+    ],
+  },
+  build: {
+    commonjsOptions: {
+      exclude: [/node_modules\/(@tanstack\/start-server-core)/],
+    },
+  },
+  environments: {
+    ssr: {
+      build: {
+        commonjsOptions: {
+          exclude: [/node_modules\/(@tanstack\/start-server-core)/],
+        },
+      },
+    },
+  },
 });
