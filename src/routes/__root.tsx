@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-router";
 
 import { AuthProvider } from "@/lib/auth-context";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 
 function NotFoundComponent() {
   return (
@@ -130,6 +131,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Outlet />
+        <ChatWidget />
       </AuthProvider>
     </QueryClientProvider>
   );
