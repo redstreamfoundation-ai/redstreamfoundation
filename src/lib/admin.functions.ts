@@ -192,6 +192,43 @@ export const adminUpdateRequest = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const adminDeleteRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAdminRole(context.userId);
+    const { data: existing } = await supabaseAdmin
+      .from("blood_requests")
+      .select("attendant_name, hospital, blood_group")
+      .eq("id", data.id)
+      .maybeSingle();
+    const { error } = await supabaseAdmin.from("blood_requests").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    const label = existing
+      ? `${existing.attendant_name} · ${existing.blood_group} · ${existing.hospital}`
+      : null;
+    await supabaseAdmin.from("admin_audit_log").insert({
+      action: "delete",
+      target_type: "request",
+      target_id: data.id,
+      target_label: label,
+      actor: await actorEmail(context.userId),
+    });
+    return { ok: true };
+  });
+
+export const adminGetSignedDocumentUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { bucket: "donor-id-proofs" | "blood-requisitions"; path: string }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAdminRole(context.userId);
+    const { data: signed, error } = await supabaseAdmin.storage
+      .from(data.bucket)
+      .createSignedUrl(data.path, 60 * 10); // 10 minutes
+    if (error) throw new Error(error.message);
+    return { url: signed.signedUrl };
+  });
+
 export const adminGetRequestDetail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => d)
