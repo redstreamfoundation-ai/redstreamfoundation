@@ -29,6 +29,7 @@ import { Route as RequestCompletedRouteImport } from './routes/request.completed
 import { Route as RequestBloodRouteImport } from './routes/request.blood'
 import { Route as DonorThanksRouteImport } from './routes/donor.thanks'
 import { Route as DonorRequestRouteImport } from './routes/donor.request'
+import { Route as DonorRegisteredRouteImport } from './routes/donor.registered'
 import { Route as DonorRegisterRouteImport } from './routes/donor.register'
 import { Route as DonorDashboardRouteImport } from './routes/donor.dashboard'
 import { Route as DonorCoordinateRouteImport } from './routes/donor.coordinate'
@@ -134,6 +135,11 @@ const DonorRequestRoute = DonorRequestRouteImport.update({
   path: '/request',
   getParentRoute: () => DonorRoute,
 } as any)
+const DonorRegisteredRoute = DonorRegisteredRouteImport.update({
+  id: '/registered',
+  path: '/registered',
+  getParentRoute: () => DonorRoute,
+} as any)
 const DonorRegisterRoute = DonorRegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/donor/coordinate': typeof DonorCoordinateRoute
   '/donor/dashboard': typeof DonorDashboardRoute
   '/donor/register': typeof DonorRegisterRoute
+  '/donor/registered': typeof DonorRegisteredRoute
   '/donor/request': typeof DonorRequestRoute
   '/donor/thanks': typeof DonorThanksRoute
   '/request/blood': typeof RequestBloodRoute
@@ -192,6 +199,7 @@ export interface FileRoutesByTo {
   '/donor/coordinate': typeof DonorCoordinateRoute
   '/donor/dashboard': typeof DonorDashboardRoute
   '/donor/register': typeof DonorRegisterRoute
+  '/donor/registered': typeof DonorRegisteredRoute
   '/donor/request': typeof DonorRequestRoute
   '/donor/thanks': typeof DonorThanksRoute
   '/request/blood': typeof RequestBloodRoute
@@ -219,6 +227,7 @@ export interface FileRoutesById {
   '/donor/coordinate': typeof DonorCoordinateRoute
   '/donor/dashboard': typeof DonorDashboardRoute
   '/donor/register': typeof DonorRegisterRoute
+  '/donor/registered': typeof DonorRegisteredRoute
   '/donor/request': typeof DonorRequestRoute
   '/donor/thanks': typeof DonorThanksRoute
   '/request/blood': typeof RequestBloodRoute
@@ -247,6 +256,7 @@ export interface FileRouteTypes {
     | '/donor/coordinate'
     | '/donor/dashboard'
     | '/donor/register'
+    | '/donor/registered'
     | '/donor/request'
     | '/donor/thanks'
     | '/request/blood'
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/donor/coordinate'
     | '/donor/dashboard'
     | '/donor/register'
+    | '/donor/registered'
     | '/donor/request'
     | '/donor/thanks'
     | '/request/blood'
@@ -297,6 +308,7 @@ export interface FileRouteTypes {
     | '/donor/coordinate'
     | '/donor/dashboard'
     | '/donor/register'
+    | '/donor/registered'
     | '/donor/request'
     | '/donor/thanks'
     | '/request/blood'
@@ -464,6 +476,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DonorRequestRouteImport
       parentRoute: typeof DonorRoute
     }
+    '/donor/registered': {
+      id: '/donor/registered'
+      path: '/registered'
+      fullPath: '/donor/registered'
+      preLoaderRoute: typeof DonorRegisteredRouteImport
+      parentRoute: typeof DonorRoute
+    }
     '/donor/register': {
       id: '/donor/register'
       path: '/register'
@@ -500,6 +519,7 @@ interface DonorRouteChildren {
   DonorCoordinateRoute: typeof DonorCoordinateRoute
   DonorDashboardRoute: typeof DonorDashboardRoute
   DonorRegisterRoute: typeof DonorRegisterRoute
+  DonorRegisteredRoute: typeof DonorRegisteredRoute
   DonorRequestRoute: typeof DonorRequestRoute
   DonorThanksRoute: typeof DonorThanksRoute
   DonorIndexRoute: typeof DonorIndexRoute
@@ -510,6 +530,7 @@ const DonorRouteChildren: DonorRouteChildren = {
   DonorCoordinateRoute: DonorCoordinateRoute,
   DonorDashboardRoute: DonorDashboardRoute,
   DonorRegisterRoute: DonorRegisterRoute,
+  DonorRegisteredRoute: DonorRegisteredRoute,
   DonorRequestRoute: DonorRequestRoute,
   DonorThanksRoute: DonorThanksRoute,
   DonorIndexRoute: DonorIndexRoute,
