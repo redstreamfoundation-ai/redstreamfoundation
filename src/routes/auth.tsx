@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Mail, Lock, User as UserIcon, ArrowRight, AlertCircle } from "lucide-react";
+import { Mail, Lock, User as UserIcon, ArrowRight, AlertCircle, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { Logo } from "@/components/landing/Logo";
@@ -23,12 +23,16 @@ function AuthPage() {
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
   const { session, loading } = useAuth();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot">("signin");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Decide intended role from where the user came from.
+  const intendedRole: "donor" | "patient" = redirect.startsWith("/request") ? "patient" : "donor";
 
   useEffect(() => {
     if (!loading && session) {
@@ -36,9 +40,37 @@ function AuthPage() {
     }
   }, [session, loading, navigate, redirect]);
 
+  // Wait until handle_new_user trigger has written a row in user_roles
+  // before forwarding to the registration / request form.
+  const waitForRole = async (userId: string) => {
+    for (let i = 0; i < 10; i++) {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .limit(1)
+        .maybeSingle();
+      if (data?.role) return data.role;
+      await new Promise((r) => setTimeout(r, 300));
+    }
+    return null;
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setInfo(null);
+    if (mode === "forgot") {
+      if (!email) { setError("Enter the email associated with your account."); return; }
+      setBusy(true);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      setBusy(false);
+      if (error) { setError(error.message); return; }
+      setInfo("Check your inbox for a password reset link.");
+      return;
+    }
     if (password.length < 6) {
       setError("Password must be at least 6 characters.");
       return;
@@ -50,16 +82,20 @@ function AuthPage() {
           email,
           password,
           options: {
-            data: { full_name: fullName },
+            data: { full_name: fullName, intended_role: intendedRole },
             emailRedirectTo: window.location.origin + redirect,
           },
         });
         if (error) throw error;
+        let userId = data.user?.id ?? null;
         if (!data.session) {
           // Fallback: sign in immediately (auto-confirm is enabled, but be safe)
-          const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+          const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
           if (signInErr) throw signInErr;
+          userId = signInData.user?.id ?? userId;
         }
+        // Validate that the trigger wrote the correct role before redirecting.
+        if (userId) await waitForRole(userId);
         navigate({ to: redirect, replace: true });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -101,11 +137,13 @@ function AuthPage() {
 
       <main className="mx-auto max-w-md px-5 pt-10 pb-16">
         <div className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
-          {mode === "signup" ? "Create account" : "Welcome back"}
+          {mode === "signup" ? "Create account" : mode === "forgot" ? "Reset password" : "Welcome back"}
         </div>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
           {mode === "signup" ? (
             <>Join the <span className="font-serif-display italic text-primary">donor</span> network.</>
+          ) : mode === "forgot" ? (
+            <>Forgot your <span className="font-serif-display italic text-primary">password</span>?</>
           ) : (
             <>Sign in to <span className="font-serif-display italic text-primary">Redstream</span>.</>
           )}
@@ -113,9 +151,13 @@ function AuthPage() {
         <p className="mt-2 text-sm text-muted-foreground">
           {mode === "signup"
             ? "One account to request blood or respond to emergencies."
+            : mode === "forgot"
+            ? "Enter your email and we'll send you a secure link to set a new password."
             : "Welcome back. Pick up where you left off."}
         </p>
 
+        {mode !== "forgot" ? (
+        <>
         <button
           onClick={google}
           disabled={busy}
@@ -133,13 +175,29 @@ function AuthPage() {
         <div className="my-6 flex items-center gap-3 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
           <span className="h-px flex-1 bg-border" /> or email <span className="h-px flex-1 bg-border" />
         </div>
+        </>
+        ) : <div className="h-6" />}
 
         <form onSubmit={submit} className="space-y-3">
           {mode === "signup" ? (
             <Field icon={UserIcon} placeholder="Full name" value={fullName} onChange={setFullName} />
           ) : null}
           <Field icon={Mail} type="email" placeholder="Email address" value={email} onChange={setEmail} />
-          <Field icon={Lock} type="password" placeholder="Password (min 6 chars)" value={password} onChange={setPassword} />
+          {mode !== "forgot" ? (
+            <Field icon={Lock} type="password" placeholder="Password (min 6 chars)" value={password} onChange={setPassword} />
+          ) : null}
+
+          {mode === "signin" ? (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => { setError(null); setInfo(null); setMode("forgot"); }}
+                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
+                <KeyRound className="h-3 w-3" /> Forgot password?
+              </button>
+            </div>
+          ) : null}
 
           {error ? (
             <div className="flex items-start gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-xs text-foreground">
@@ -147,25 +205,52 @@ function AuthPage() {
               <span>{error}</span>
             </div>
           ) : null}
+          {info ? (
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs text-foreground">
+              {info}
+            </div>
+          ) : null}
 
           <button
             type="submit"
-            disabled={busy || !email || password.length < 6 || (mode === "signup" && !fullName.trim())}
+            disabled={
+              busy ||
+              !email ||
+              (mode !== "forgot" && password.length < 6) ||
+              (mode === "signup" && !fullName.trim())
+            }
             className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)] transition-all hover:bg-[var(--primary-deep)] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}
+            {busy
+              ? "Please wait…"
+              : mode === "signup"
+              ? "Create account"
+              : mode === "forgot"
+              ? "Send reset link"
+              : "Sign in"}
             <ArrowRight className="h-4 w-4" />
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
-          {mode === "signup" ? "Already have an account? " : "New to Redstream? "}
-          <button
-            onClick={() => { setError(null); setMode(mode === "signup" ? "signin" : "signup"); }}
-            className="font-semibold text-primary hover:underline"
-          >
-            {mode === "signup" ? "Sign in" : "Create one"}
-          </button>
+          {mode === "forgot" ? (
+            <button
+              onClick={() => { setError(null); setInfo(null); setMode("signin"); }}
+              className="font-semibold text-primary hover:underline"
+            >
+              Back to sign in
+            </button>
+          ) : (
+            <>
+              {mode === "signup" ? "Already have an account? " : "New to Redstream? "}
+              <button
+                onClick={() => { setError(null); setInfo(null); setMode(mode === "signup" ? "signin" : "signup"); }}
+                className="font-semibold text-primary hover:underline"
+              >
+                {mode === "signup" ? "Sign in" : "Create one"}
+              </button>
+            </>
+          )}
         </p>
       </main>
     </div>
