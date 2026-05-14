@@ -261,7 +261,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
 function StatCard({
   label, value, icon: Icon, tone = "neutral",
-}: { label: string; value?: number; icon: React.ComponentType<{ className?: string }>; tone?: "primary" | "amber" | "emerald" | "neutral" }) {
+}: { label: string; value: number; icon: React.ComponentType<{ className?: string }>; tone?: "primary" | "amber" | "emerald" | "neutral" }) {
   const map = {
     primary: "bg-primary/10 text-primary",
     amber: "bg-amber-500/10 text-amber-600",
@@ -274,7 +274,7 @@ function StatCard({
         <div>
           <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
           <div className="mt-2 font-serif-display text-3xl text-foreground">
-            {value === undefined ? <span className="text-muted-foreground">—</span> : value}
+            {value}
           </div>
         </div>
         <span className={`grid h-9 w-9 place-items-center rounded-xl ${map[tone]}`}>
