@@ -3,6 +3,7 @@ import { MessageCircle, X, Send, Loader2, Paperclip } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { chatbotReply } from "@/lib/chatbot.functions";
 import { registerDonorFromChat } from "@/lib/donor-registration.functions";
+import { submitBloodRequestFromChat } from "@/lib/blood-request.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -34,6 +35,33 @@ type RegData = {
   id_proof_url?: string;
 };
 
+type ReqStep =
+  | "idle"
+  | "patient_name"
+  | "blood"
+  | "units"
+  | "hospital"
+  | "locality"
+  | "attendant_name"
+  | "attendant_phone"
+  | "urgency"
+  | "requisition"
+  | "confirm"
+  | "submitting"
+  | "done";
+
+type ReqData = {
+  patient_name?: string;
+  blood_group?: string;
+  units?: number;
+  hospital?: string;
+  locality?: string;
+  attendant_name?: string;
+  attendant_phone?: string;
+  urgency?: "urgent_2h" | "same_day" | "within_24h";
+  requisition_url?: string;
+};
+
 const VALID_BLOOD = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 const T = {
@@ -63,6 +91,25 @@ const T = {
     badAvail: "Please reply with 'weekdays', 'weekends', or 'anytime'.",
     uploadFail: "Could not upload that file. Please try a smaller image (under 5 MB).",
     saveFail: "Sorry, we couldn't save your registration. Please try again later.",
+    reqAskPatient: "Let's submit a blood request. What is the patient's full name?",
+    reqAskBlood: "Which blood group is needed? (A+, A-, B+, B-, AB+, AB-, O+, O-)",
+    reqAskUnits: "How many units are required? (1–20)",
+    reqAskHospital: "Which hospital is the patient admitted in? (name)",
+    reqAskLocality: "What is the hospital address or area/landmark?",
+    reqAskAttName: "What is the attendant's name (the person we should coordinate with)?",
+    reqAskAttPhone: "What is the attendant's phone number? (10 digits)",
+    reqAskUrgency:
+      "How urgent is the requirement? Reply 'urgent' (within 2 hours), 'today' (same day), or '24h' (within 24 hours).",
+    reqAskSlip:
+      "Please upload the hospital requisition slip (photo or PDF). Tap 📎 below to attach.",
+    reqBadUnits: "Please enter a number between 1 and 20.",
+    reqBadUrgency: "Please reply with 'urgent', 'today', or '24h'.",
+    reqSummary: (d: ReqData) =>
+      `Please confirm the request:\n• Patient: ${d.patient_name}\n• Blood group: ${d.blood_group}\n• Units: ${d.units}\n• Hospital: ${d.hospital}\n• Address: ${d.locality}\n• Attendant: ${d.attendant_name} (${d.attendant_phone})\n• Urgency: ${urgencyLabel(d.urgency!, "en")}\n• Requisition slip: uploaded ✓\n\nReply 'yes' to confirm or 'no' to cancel.`,
+    reqSuccess:
+      "Your request has been received. A coordinator will reach out within 30 minutes on the attendant's phone. ❤️",
+    reqCancelled: "Request cancelled. Type 'need blood' anytime to start again.",
+    reqSaveFail: "Sorry, we couldn't save your request. Please try again later.",
   },
   hi: {
     askName: "बढ़िया! आइए आपको डोनर के रूप में पंजीकृत करें। आपका पूरा नाम क्या है?",
@@ -90,8 +137,38 @@ const T = {
     badAvail: "कृपया 'weekdays', 'weekends', या 'anytime' लिखें।",
     uploadFail: "फ़ाइल अपलोड नहीं हो सकी। कृपया छोटी इमेज (5 MB से कम) आज़माएँ।",
     saveFail: "क्षमा करें, हम आपका पंजीकरण सहेज नहीं सके। कृपया बाद में पुनः प्रयास करें।",
+    reqAskPatient: "आइए ब्लड रिक्वेस्ट दर्ज करें। मरीज़ का पूरा नाम क्या है?",
+    reqAskBlood: "किस ब्लड ग्रुप की ज़रूरत है? (A+, A-, B+, B-, AB+, AB-, O+, O-)",
+    reqAskUnits: "कितनी यूनिट चाहिए? (1–20)",
+    reqAskHospital: "मरीज़ किस अस्पताल में भर्ती हैं? (नाम बताइए)",
+    reqAskLocality: "अस्पताल का पता या इलाक़ा/लैंडमार्क क्या है?",
+    reqAskAttName: "अटेंडेंट का नाम क्या है (जिनसे हम संपर्क करें)?",
+    reqAskAttPhone: "अटेंडेंट का फ़ोन नंबर क्या है? (10 अंक)",
+    reqAskUrgency:
+      "कितनी जल्दी ज़रूरत है? 'urgent' (2 घंटे में), 'today' (आज ही), या '24h' (24 घंटे में) लिखें।",
+    reqAskSlip:
+      "कृपया अस्पताल की requisition slip (फोटो या PDF) अपलोड करें। नीचे 📎 पर टैप करें।",
+    reqBadUnits: "कृपया 1 से 20 के बीच की संख्या दर्ज करें।",
+    reqBadUrgency: "कृपया 'urgent', 'today', या '24h' लिखें।",
+    reqSummary: (d: ReqData) =>
+      `कृपया अनुरोध की पुष्टि करें:\n• मरीज़: ${d.patient_name}\n• ब्लड ग्रुप: ${d.blood_group}\n• यूनिट: ${d.units}\n• अस्पताल: ${d.hospital}\n• पता: ${d.locality}\n• अटेंडेंट: ${d.attendant_name} (${d.attendant_phone})\n• तत्परता: ${urgencyLabel(d.urgency!, "hi")}\n• Requisition slip: अपलोड हो गई ✓\n\nपुष्टि के लिए 'yes' लिखें या रद्द करने के लिए 'no'.`,
+    reqSuccess:
+      "आपका अनुरोध प्राप्त हो गया है। एक coordinator 30 मिनट के भीतर अटेंडेंट के फ़ोन पर संपर्क करेगा। ❤️",
+    reqCancelled: "अनुरोध रद्द कर दिया गया। फिर से शुरू करने के लिए कभी भी 'need blood' लिखें।",
+    reqSaveFail: "क्षमा करें, हम आपका अनुरोध सहेज नहीं सके। कृपया बाद में पुनः प्रयास करें।",
   },
 } as const;
+
+function urgencyLabel(u: NonNullable<ReqData["urgency"]>, lang: Lang): string {
+  if (lang === "hi") {
+    if (u === "urgent_2h") return "बहुत ज़रूरी (2 घंटे में)";
+    if (u === "same_day") return "आज ही";
+    return "24 घंटे में";
+  }
+  if (u === "urgent_2h") return "Urgent (within 2 hours)";
+  if (u === "same_day") return "Same day";
+  return "Within 24 hours";
+}
 
 function detectLang(text: string): Lang {
   // Devanagari range
@@ -110,6 +187,16 @@ function isDonorIntent(text: string): boolean {
   );
 }
 
+function isRequestIntent(text: string): boolean {
+  const t = text.toLowerCase();
+  return (
+    /\bneed (blood|plasma|platelets)\b/.test(t) ||
+    /\b(request|require|looking for).*(blood|donor)\b/.test(t) ||
+    /\b(blood|plasma|platelets).*(needed|required|urgent)\b/.test(t) ||
+    /रक्त चाहिए|खून चाहिए|ब्लड चाहिए|रक्त की ज़रूरत|खून की ज़रूरत|रिक्वेस्ट/.test(text)
+  );
+}
+
 const GREETING: ChatMessage = {
   role: "assistant",
   content:
@@ -125,12 +212,16 @@ export function ChatWidget() {
   const [regStep, setRegStep] = useState<RegStep>("idle");
   const [regData, setRegData] = useState<RegData>({});
   const [regLang, setRegLang] = useState<Lang>("en");
+  const [reqStep, setReqStep] = useState<ReqStep>("idle");
+  const [reqData, setReqData] = useState<ReqData>({});
+  const [reqLang, setReqLang] = useState<Lang>("en");
   const [uploading, setUploading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const sendChat = useServerFn(chatbotReply);
   const submitDonor = useServerFn(registerDonorFromChat);
+  const submitRequest = useServerFn(submitBloodRequestFromChat);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -156,6 +247,18 @@ export function ChatWidget() {
     setRegData({});
     setRegStep("name");
     pushAssistant(T[lang].askName);
+  }
+
+  async function startRequest(lang: Lang) {
+    const { data: sess } = await supabase.auth.getSession();
+    if (!sess.session) {
+      pushAssistant(T[lang].needLogin);
+      return;
+    }
+    setReqLang(lang);
+    setReqData({});
+    setReqStep("patient_name");
+    pushAssistant(T[lang].reqAskPatient);
   }
 
   async function handleRegistrationStep(text: string) {
@@ -261,10 +364,119 @@ export function ChatWidget() {
     }
   }
 
+  async function handleRequestStep(text: string) {
+    const t = T[reqLang];
+    switch (reqStep) {
+      case "patient_name": {
+        if (text.length < 2) return pushAssistant(t.reqAskPatient);
+        setReqData((d) => ({ ...d, patient_name: text }));
+        setReqStep("blood");
+        return pushAssistant(t.reqAskBlood);
+      }
+      case "blood": {
+        const bg = text.toUpperCase().replace(/\s/g, "");
+        if (!VALID_BLOOD.includes(bg)) return pushAssistant(t.badBlood);
+        setReqData((d) => ({ ...d, blood_group: bg }));
+        setReqStep("units");
+        return pushAssistant(t.reqAskUnits);
+      }
+      case "units": {
+        const n = parseInt(text.replace(/\D/g, ""), 10);
+        if (Number.isNaN(n) || n < 1 || n > 20) return pushAssistant(t.reqBadUnits);
+        setReqData((d) => ({ ...d, units: n }));
+        setReqStep("hospital");
+        return pushAssistant(t.reqAskHospital);
+      }
+      case "hospital": {
+        if (text.length < 2) return pushAssistant(t.reqAskHospital);
+        setReqData((d) => ({ ...d, hospital: text }));
+        setReqStep("locality");
+        return pushAssistant(t.reqAskLocality);
+      }
+      case "locality": {
+        if (text.length < 1) return pushAssistant(t.reqAskLocality);
+        setReqData((d) => ({ ...d, locality: text }));
+        setReqStep("attendant_name");
+        return pushAssistant(t.reqAskAttName);
+      }
+      case "attendant_name": {
+        if (text.length < 2) return pushAssistant(t.reqAskAttName);
+        setReqData((d) => ({ ...d, attendant_name: text }));
+        setReqStep("attendant_phone");
+        return pushAssistant(t.reqAskAttPhone);
+      }
+      case "attendant_phone": {
+        const digits = text.replace(/\D/g, "");
+        if (digits.length < 10 || digits.length > 13) return pushAssistant(t.badPhone);
+        setReqData((d) => ({ ...d, attendant_phone: digits }));
+        setReqStep("urgency");
+        return pushAssistant(t.reqAskUrgency);
+      }
+      case "urgency": {
+        const lower = text.toLowerCase();
+        let val: ReqData["urgency"] | null = null;
+        if (/urgent|2\s*h|दो घंटे|बहुत ज़रूरी|बहुत जरूरी/.test(lower)) val = "urgent_2h";
+        else if (/today|same\s*day|आज/.test(lower)) val = "same_day";
+        else if (/24|day|कल|घंटे/.test(lower)) val = "within_24h";
+        if (!val) return pushAssistant(t.reqBadUrgency);
+        setReqData((d) => ({ ...d, urgency: val! }));
+        setReqStep("requisition");
+        return pushAssistant(t.reqAskSlip);
+      }
+      case "requisition": {
+        return pushAssistant(t.reqAskSlip);
+      }
+      case "confirm": {
+        const lower = text.toLowerCase().trim();
+        if (/^(yes|y|haan|हाँ|हां|ok|okay|confirm|पुष्टि)/.test(lower)) {
+          await submitRequestNow();
+        } else if (/^(no|n|cancel|nahi|नहीं|रद्द)/.test(lower)) {
+          setReqStep("idle");
+          setReqData({});
+          pushAssistant(t.reqCancelled);
+        } else {
+          pushAssistant(t.reqSummary(reqData));
+        }
+        return;
+      }
+    }
+  }
+
+  async function submitRequestNow() {
+    const t = T[reqLang];
+    setReqStep("submitting");
+    pushAssistant(t.saving);
+    try {
+      await submitRequest({
+        data: {
+          patient_name: reqData.patient_name!,
+          blood_group: reqData.blood_group!,
+          units: reqData.units!,
+          hospital: reqData.hospital!,
+          locality: reqData.locality!,
+          attendant_name: reqData.attendant_name!,
+          attendant_phone: reqData.attendant_phone!,
+          urgency: reqData.urgency!,
+          requisition_url: reqData.requisition_url!,
+        },
+      });
+      setReqStep("done");
+      pushAssistant(t.reqSuccess);
+    } catch (err) {
+      console.error(err);
+      setReqStep("confirm");
+      pushAssistant(err instanceof Error ? err.message : t.reqSaveFail);
+    }
+  }
+
   async function handleFileSelected(file: File) {
-    if (regStep !== "id_proof") return;
-    const t = T[regLang];
-    if (file.size > 5 * 1024 * 1024) {
+    const isDonorUpload = regStep === "id_proof";
+    const isRequestUpload = reqStep === "requisition";
+    if (!isDonorUpload && !isRequestUpload) return;
+    const lang = isDonorUpload ? regLang : reqLang;
+    const t = T[lang];
+    const maxBytes = isRequestUpload ? 10 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (file.size > maxBytes) {
       pushAssistant(t.uploadFail);
       return;
     }
@@ -274,22 +486,32 @@ export function ChatWidget() {
       const uid = sess.session?.user?.id;
       if (!uid) {
         pushAssistant(t.needLogin);
-        setRegStep("idle");
+        if (isDonorUpload) setRegStep("idle");
+        else setReqStep("idle");
         return;
       }
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const path = `${uid}/${Date.now()}.${ext}`;
+      const bucket = isDonorUpload ? "donor-id-proofs" : "blood-requisitions";
       const { error: upErr } = await supabase.storage
-        .from("donor-id-proofs")
+        .from(bucket)
         .upload(path, file, { upsert: true, contentType: file.type });
       if (upErr) throw upErr;
-      setRegData((d) => {
-        const next = { ...d, id_proof_url: path };
-        // Use the freshly merged object for the summary
-        setRegStep("confirm");
-        pushAssistant(T[regLang].summary(next));
-        return next;
-      });
+      if (isDonorUpload) {
+        setRegData((d) => {
+          const next = { ...d, id_proof_url: path };
+          setRegStep("confirm");
+          pushAssistant(T[regLang].summary(next));
+          return next;
+        });
+      } else {
+        setReqData((d) => {
+          const next = { ...d, requisition_url: path };
+          setReqStep("confirm");
+          pushAssistant(T[reqLang].reqSummary(next));
+          return next;
+        });
+      }
     } catch (err) {
       console.error(err);
       pushAssistant(t.uploadFail);
@@ -312,10 +534,18 @@ export function ChatWidget() {
       await handleRegistrationStep(text);
       return;
     }
+    if (reqStep !== "idle" && reqStep !== "done") {
+      await handleRequestStep(text);
+      return;
+    }
 
     // Detect donor-registration intent and start flow
     if (isDonorIntent(text)) {
       await startRegistration(detectLang(text));
+      return;
+    }
+    if (isRequestIntent(text)) {
+      await startRequest(detectLang(text));
       return;
     }
 
