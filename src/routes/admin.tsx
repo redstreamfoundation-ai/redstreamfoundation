@@ -456,6 +456,7 @@ function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnaut
   const pageRows = filtered ? filtered.slice((page - 1) * pageSize, page * pageSize) : null;
 
   return (
+    <>
     <Card>
       <TableHeader title="Donor signups" count={total} />
       <div className="grid gap-2 border-b border-border bg-secondary/30 px-5 py-3 sm:grid-cols-2 lg:grid-cols-6">
@@ -552,6 +553,117 @@ function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnaut
       </TableScroll>
       <Pagination page={page} pageCount={pageCount} pageSize={pageSize} total={total} onPage={setPage} onPageSize={setPageSize} />
     </Card>
+    {editing ? (
+      <DonorEditDrawer
+        donor={editing}
+        onClose={() => setEditing(null)}
+        onSaved={async () => { setEditing(null); await load(); onChange(); }}
+      />
+    ) : null}
+    </>
+  );
+}
+
+function DonorEditDrawer({
+  donor, onClose, onSaved,
+}: { donor: Donor; onClose: () => void; onSaved: () => void }) {
+  const [full_name, setFullName] = useState(donor.full_name);
+  const [phone, setPhone] = useState(donor.phone);
+  const [blood_group, setBloodGroup] = useState(donor.blood_group);
+  const [locality, setLocality] = useState(donor.locality);
+  const [pincode, setPincode] = useState(donor.pincode || "");
+  const [last_donation_date, setLastDonation] = useState(donor.last_donation_date ?? "");
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setErr(null);
+    try {
+      await adminUpdateDonor({
+        data: {
+          id: donor.id,
+          full_name: full_name.trim(),
+          phone: phone.trim(),
+          blood_group,
+          locality: locality.trim(),
+          pincode: pincode.trim(),
+          last_donation_date: last_donation_date || null,
+        },
+      });
+      onSaved();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      <button aria-label="Close" onClick={onClose} className="flex-1 bg-black/40" />
+      <form onSubmit={save} className="w-full max-w-md bg-white shadow-2xl flex flex-col h-full">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+          <div>
+            <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Edit donor</div>
+            <div className="font-serif-display text-lg text-foreground">{donor.full_name}</div>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-md p-1.5 text-muted-foreground hover:bg-secondary">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
+          <FieldInput label="Name" value={full_name} onChange={setFullName} required />
+          <FieldInput label="Phone" value={phone} onChange={setPhone} required />
+          <div>
+            <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground mb-1">Blood group</div>
+            <select
+              value={blood_group}
+              onChange={(e) => setBloodGroup(e.target.value)}
+              className="w-full rounded-md border border-border bg-white px-2.5 py-2 text-sm outline-none focus:border-primary"
+            >
+              {BLOOD_GROUPS.map((g) => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </div>
+          <FieldInput label="Locality" value={locality} onChange={setLocality} required />
+          <FieldInput label="Pincode" value={pincode} onChange={setPincode} />
+          <div>
+            <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground mb-1">Last donation date</div>
+            <input
+              type="date"
+              value={last_donation_date ?? ""}
+              onChange={(e) => setLastDonation(e.target.value)}
+              className="w-full rounded-md border border-border bg-white px-2.5 py-2 text-sm outline-none focus:border-primary"
+            />
+          </div>
+          {err ? <div className="text-xs text-red-600">{err}</div> : null}
+        </div>
+        <div className="border-t border-border px-5 py-3 flex items-center justify-end gap-2">
+          <button type="button" onClick={onClose} className="rounded-md border border-border bg-white px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary">Cancel</button>
+          <button type="submit" disabled={saving} className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50">
+            {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+            Save changes
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function FieldInput({
+  label, value, onChange, required,
+}: { label: string; value: string; onChange: (v: string) => void; required?: boolean }) {
+  return (
+    <div>
+      <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground mb-1">{label}</div>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        className="w-full rounded-md border border-border bg-white px-2.5 py-2 text-sm outline-none focus:border-primary"
+      />
+    </div>
   );
 }
 
