@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
 export type Urgency = "critical" | "within-2h" | "within-24h" | "planned";
 
@@ -79,11 +79,32 @@ type Ctx = {
 
 const RequestCtx = createContext<Ctx | null>(null);
 
+const STORAGE_KEY = "rs_request_state_v1";
+
+function loadInitial(): RequestState {
+  if (typeof window === "undefined") return DEFAULT;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return DEFAULT;
+    return { ...DEFAULT, ...JSON.parse(raw) };
+  } catch {
+    return DEFAULT;
+  }
+}
+
 export function RequestProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<RequestState>(DEFAULT);
+  const [state, setState] = useState<RequestState>(loadInitial);
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {}
+  }, [state]);
   const update = (patch: Partial<RequestState>) =>
     setState((s) => ({ ...s, ...patch }));
-  const reset = () => setState(DEFAULT);
+  const reset = () => {
+    setState(DEFAULT);
+    try { window.localStorage.removeItem(STORAGE_KEY); } catch {}
+  };
   return (
     <RequestCtx.Provider value={{ state, update, reset }}>
       {children}
