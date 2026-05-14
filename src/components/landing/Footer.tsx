@@ -170,3 +170,112 @@ function HelplineCol() {
     </div>
   );
 }
+
+function ContactForm() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [sent, setSent] = useState(false);
+
+  const valid =
+    name.trim().length > 0 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) &&
+    message.trim().length > 0;
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!valid) return;
+    const subject = encodeURIComponent(`Website contact — ${name.slice(0, 80)}`);
+    const body = encodeURIComponent(
+      `${message.slice(0, 1000)}\n\n— ${name.slice(0, 80)} <${email.slice(0, 120)}>`,
+    );
+    window.location.href = `mailto:contact@redstreamfoundation.org?subject=${subject}&body=${body}`;
+    setSent(true);
+  }
+
+  return (
+    <section
+      aria-label="Contact us"
+      className="mt-12 rounded-3xl border border-border bg-background/60 p-6 md:p-8"
+    >
+      <div className="grid gap-8 md:grid-cols-12 md:gap-x-10">
+        <div className="md:col-span-5">
+          <h3 className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            Contact us
+          </h3>
+          <p className="font-serif-display mt-3 text-2xl leading-tight text-foreground md:text-3xl">
+            Partnerships, press, or general questions.
+          </p>
+          <p className="mt-3 text-sm text-muted-foreground">
+            For real emergencies, please call our 24/7 helpline above — it's the
+            fastest way to reach a coordinator.
+          </p>
+        </div>
+
+        <form onSubmit={onSubmit} className="md:col-span-7">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block">
+              <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                Name
+              </span>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value.slice(0, 80))}
+                required
+                maxLength={80}
+                placeholder="Your name"
+                className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                Email
+              </span>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value.slice(0, 120))}
+                required
+                maxLength={120}
+                placeholder="you@example.com"
+                className="mt-2 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+            </label>
+          </div>
+          <label className="mt-3 block">
+            <span className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              Message
+            </span>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value.slice(0, 1000))}
+              required
+              maxLength={1000}
+              rows={4}
+              placeholder="How can we help?"
+              className="mt-2 w-full resize-y rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+            />
+            <div className="mt-1 text-right text-[11px] text-muted-foreground">
+              {message.length} / 1000
+            </div>
+          </label>
+
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              Opens your email app addressed to{" "}
+              <span className="font-medium text-foreground">contact@redstreamfoundation.org</span>.
+            </p>
+            <button
+              type="submit"
+              disabled={!valid}
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)] transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Send className="h-4 w-4" />
+              {sent ? "Email opened" : "Send message"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+  );
+}
