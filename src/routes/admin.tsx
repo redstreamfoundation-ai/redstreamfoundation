@@ -979,7 +979,7 @@ function RequestEditDrawer({
 
 type RequestDetailData = {
   request: RequestRow & { created_by?: string | null };
-  matches: Array<{ id: string; full_name: string; phone: string; blood_group: string; locality: string; pincode: string }>;
+  matches: Array<{ id: string; full_name: string; phone: string; blood_group: string; locality: string; pincode: string; last_donation_date: string | null }>;
 };
 
 function RequestDetail({
@@ -1043,11 +1043,11 @@ function RequestDetail({
             <TableScroll>
               <table className="w-full text-sm">
                 <thead className="bg-secondary/60 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  <tr><Th>Name</Th><Th>Phone</Th><Th>Blood</Th><Th>Location</Th></tr>
+                  <tr><Th>Name</Th><Th>Phone</Th><Th>Blood</Th><Th>Location</Th><Th>Last donation</Th></tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {data.matches.length === 0 ? (
-                    <tr><td colSpan={4} className="px-5 py-8 text-center text-sm text-muted-foreground">No verified donors match this blood group yet.</td></tr>
+                    <tr><td colSpan={5} className="px-5 py-8 text-center text-sm text-muted-foreground">No verified donors match this blood group yet.</td></tr>
                   ) : data.matches.map((d) => (
                     <tr key={d.id} className="hover:bg-secondary/40">
                       <Td className="font-medium text-foreground">{d.full_name}</Td>
@@ -1058,6 +1058,7 @@ function RequestDetail({
                       </Td>
                       <Td><span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-bold text-primary">{d.blood_group}</span></Td>
                       <Td>{[d.locality, d.pincode].filter(Boolean).join(", ")}</Td>
+                      <Td className="text-muted-foreground">{d.last_donation_date ? new Date(d.last_donation_date).toLocaleDateString("en-IN", { dateStyle: "medium" }) : "—"}</Td>
                     </tr>
                   ))}
                 </tbody>
