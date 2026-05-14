@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RequestRouteImport } from './routes/request'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as DonorRouteImport } from './routes/donor'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -41,6 +42,11 @@ import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 const RequestRoute = RequestRouteImport.update({
   id: '/request',
   path: '/request',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HomeRoute = HomeRouteImport.update({
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/donor': typeof DonorRouteWithChildren
   '/home': typeof HomeRoute
+  '/privacy': typeof PrivacyRoute
   '/request': typeof RequestRouteWithChildren
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/donors': typeof AdminDonorsRoute
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/home': typeof HomeRoute
+  '/privacy': typeof PrivacyRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/donors': typeof AdminDonorsRoute
   '/admin/matching': typeof AdminMatchingRoute
@@ -243,6 +251,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/donor': typeof DonorRouteWithChildren
   '/home': typeof HomeRoute
+  '/privacy': typeof PrivacyRoute
   '/request': typeof RequestRouteWithChildren
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/donors': typeof AdminDonorsRoute
@@ -275,6 +284,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/donor'
     | '/home'
+    | '/privacy'
     | '/request'
     | '/admin/analytics'
     | '/admin/donors'
@@ -303,6 +313,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/home'
+    | '/privacy'
     | '/admin/analytics'
     | '/admin/donors'
     | '/admin/matching'
@@ -332,6 +343,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/donor'
     | '/home'
+    | '/privacy'
     | '/request'
     | '/admin/analytics'
     | '/admin/donors'
@@ -363,6 +375,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DonorRoute: typeof DonorRouteWithChildren
   HomeRoute: typeof HomeRoute
+  PrivacyRoute: typeof PrivacyRoute
   RequestRoute: typeof RequestRouteWithChildren
 }
 
@@ -373,6 +386,13 @@ declare module '@tanstack/react-router' {
       path: '/request'
       fullPath: '/request'
       preLoaderRoute: typeof RequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/home': {
@@ -642,6 +662,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   DonorRoute: DonorRouteWithChildren,
   HomeRoute: HomeRoute,
+  PrivacyRoute: PrivacyRoute,
   RequestRoute: RequestRouteWithChildren,
 }
 export const routeTree = rootRouteImport
