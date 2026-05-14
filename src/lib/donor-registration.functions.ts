@@ -46,6 +46,7 @@ export const registerDonorFromChat = createServerFn({ method: "POST" })
       last_donation_date: lastDonation,
       id_proof_url: data.id_proof_url,
       status: "pending",
+      source: "chatbot",
     };
 
     const { data: existing, error: selErr } = await supabase
