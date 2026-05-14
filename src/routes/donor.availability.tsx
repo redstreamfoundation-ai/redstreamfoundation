@@ -111,7 +111,7 @@ function Availability() {
       setError(error.message);
       return;
     }
-    navigate({ to: "/donor/dashboard" });
+    navigate({ to: "/donor/registered" });
   };
 
   if (loading || !hydrated) {

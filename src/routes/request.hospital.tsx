@@ -1,9 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { ChevronRight, Building2, MapPin, User, Phone } from "lucide-react";
 import { PrimaryButton, StepShell } from "@/components/request/StepShell";
 import { Combobox } from "@/components/request/Combobox";
 import { DELHI_HOSPITALS, DELHI_LOCALITIES } from "@/lib/delhi-data";
 import { useRequest } from "@/lib/request-store";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/request/hospital")({
   component: HospitalStep,
@@ -12,6 +15,27 @@ export const Route = createFileRoute("/request/hospital")({
 function HospitalStep() {
   const { state, update } = useRequest();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Auto-fill attendant name/phone from saved profile (first-time users)
+  useEffect(() => {
+    if (!user) return;
+    if (state.attendantName && state.attendantPhone) return;
+    (async () => {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("full_name, phone")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!prof) return;
+      const patch: { attendantName?: string; attendantPhone?: string } = {};
+      if (!state.attendantName && prof.full_name) patch.attendantName = prof.full_name;
+      if (!state.attendantPhone && prof.phone)
+        patch.attendantPhone = prof.phone.replace(/\D/g, "").slice(-10);
+      if (Object.keys(patch).length) update(patch);
+    })();
+  }, [user, state.attendantName, state.attendantPhone, update]);
+
   const valid =
     state.hospital.trim() &&
     state.locality.trim() &&

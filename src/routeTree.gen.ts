@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RequestRouteImport } from './routes/request'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as HomeRouteImport } from './routes/home'
@@ -28,11 +29,17 @@ import { Route as RequestCompletedRouteImport } from './routes/request.completed
 import { Route as RequestBloodRouteImport } from './routes/request.blood'
 import { Route as DonorThanksRouteImport } from './routes/donor.thanks'
 import { Route as DonorRequestRouteImport } from './routes/donor.request'
+import { Route as DonorRegisteredRouteImport } from './routes/donor.registered'
 import { Route as DonorRegisterRouteImport } from './routes/donor.register'
 import { Route as DonorDashboardRouteImport } from './routes/donor.dashboard'
 import { Route as DonorCoordinateRouteImport } from './routes/donor.coordinate'
 import { Route as DonorAvailabilityRouteImport } from './routes/donor.availability'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RequestRoute = RequestRouteImport.update({
   id: '/request',
   path: '/request',
@@ -128,6 +135,11 @@ const DonorRequestRoute = DonorRequestRouteImport.update({
   path: '/request',
   getParentRoute: () => DonorRoute,
 } as any)
+const DonorRegisteredRoute = DonorRegisteredRouteImport.update({
+  id: '/registered',
+  path: '/registered',
+  getParentRoute: () => DonorRoute,
+} as any)
 const DonorRegisterRoute = DonorRegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -157,10 +169,12 @@ export interface FileRoutesByFullPath {
   '/home': typeof HomeRoute
   '/privacy': typeof PrivacyRoute
   '/request': typeof RequestRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/donor/availability': typeof DonorAvailabilityRoute
   '/donor/coordinate': typeof DonorCoordinateRoute
   '/donor/dashboard': typeof DonorDashboardRoute
   '/donor/register': typeof DonorRegisterRoute
+  '/donor/registered': typeof DonorRegisteredRoute
   '/donor/request': typeof DonorRequestRoute
   '/donor/thanks': typeof DonorThanksRoute
   '/request/blood': typeof RequestBloodRoute
@@ -180,10 +194,12 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/home': typeof HomeRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/donor/availability': typeof DonorAvailabilityRoute
   '/donor/coordinate': typeof DonorCoordinateRoute
   '/donor/dashboard': typeof DonorDashboardRoute
   '/donor/register': typeof DonorRegisterRoute
+  '/donor/registered': typeof DonorRegisteredRoute
   '/donor/request': typeof DonorRequestRoute
   '/donor/thanks': typeof DonorThanksRoute
   '/request/blood': typeof RequestBloodRoute
@@ -206,10 +222,12 @@ export interface FileRoutesById {
   '/home': typeof HomeRoute
   '/privacy': typeof PrivacyRoute
   '/request': typeof RequestRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/donor/availability': typeof DonorAvailabilityRoute
   '/donor/coordinate': typeof DonorCoordinateRoute
   '/donor/dashboard': typeof DonorDashboardRoute
   '/donor/register': typeof DonorRegisterRoute
+  '/donor/registered': typeof DonorRegisteredRoute
   '/donor/request': typeof DonorRequestRoute
   '/donor/thanks': typeof DonorThanksRoute
   '/request/blood': typeof RequestBloodRoute
@@ -233,10 +251,12 @@ export interface FileRouteTypes {
     | '/home'
     | '/privacy'
     | '/request'
+    | '/reset-password'
     | '/donor/availability'
     | '/donor/coordinate'
     | '/donor/dashboard'
     | '/donor/register'
+    | '/donor/registered'
     | '/donor/request'
     | '/donor/thanks'
     | '/request/blood'
@@ -256,10 +276,12 @@ export interface FileRouteTypes {
     | '/auth'
     | '/home'
     | '/privacy'
+    | '/reset-password'
     | '/donor/availability'
     | '/donor/coordinate'
     | '/donor/dashboard'
     | '/donor/register'
+    | '/donor/registered'
     | '/donor/request'
     | '/donor/thanks'
     | '/request/blood'
@@ -281,10 +303,12 @@ export interface FileRouteTypes {
     | '/home'
     | '/privacy'
     | '/request'
+    | '/reset-password'
     | '/donor/availability'
     | '/donor/coordinate'
     | '/donor/dashboard'
     | '/donor/register'
+    | '/donor/registered'
     | '/donor/request'
     | '/donor/thanks'
     | '/request/blood'
@@ -307,10 +331,18 @@ export interface RootRouteChildren {
   HomeRoute: typeof HomeRoute
   PrivacyRoute: typeof PrivacyRoute
   RequestRoute: typeof RequestRouteWithChildren
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/request': {
       id: '/request'
       path: '/request'
@@ -444,6 +476,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DonorRequestRouteImport
       parentRoute: typeof DonorRoute
     }
+    '/donor/registered': {
+      id: '/donor/registered'
+      path: '/registered'
+      fullPath: '/donor/registered'
+      preLoaderRoute: typeof DonorRegisteredRouteImport
+      parentRoute: typeof DonorRoute
+    }
     '/donor/register': {
       id: '/donor/register'
       path: '/register'
@@ -480,6 +519,7 @@ interface DonorRouteChildren {
   DonorCoordinateRoute: typeof DonorCoordinateRoute
   DonorDashboardRoute: typeof DonorDashboardRoute
   DonorRegisterRoute: typeof DonorRegisterRoute
+  DonorRegisteredRoute: typeof DonorRegisteredRoute
   DonorRequestRoute: typeof DonorRequestRoute
   DonorThanksRoute: typeof DonorThanksRoute
   DonorIndexRoute: typeof DonorIndexRoute
@@ -490,6 +530,7 @@ const DonorRouteChildren: DonorRouteChildren = {
   DonorCoordinateRoute: DonorCoordinateRoute,
   DonorDashboardRoute: DonorDashboardRoute,
   DonorRegisterRoute: DonorRegisterRoute,
+  DonorRegisteredRoute: DonorRegisteredRoute,
   DonorRequestRoute: DonorRequestRoute,
   DonorThanksRoute: DonorThanksRoute,
   DonorIndexRoute: DonorIndexRoute,
@@ -532,6 +573,7 @@ const rootRouteChildren: RootRouteChildren = {
   HomeRoute: HomeRoute,
   PrivacyRoute: PrivacyRoute,
   RequestRoute: RequestRouteWithChildren,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
