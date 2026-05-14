@@ -157,7 +157,7 @@ function LoginScreen({ onSuccess }: { onSuccess: (pw: string) => void }) {
 }
 
 function Dashboard({ password, onLogout }: { password: string; onLogout: () => void }) {
-  const [tab, setTab] = useState<"donors" | "requests">("donors");
+  const [tab, setTab] = useState<"donors" | "requests" | "audit">("donors");
   const [stats, setStats] = useState<Stats | null>(null);
   const [statsErr, setStatsErr] = useState<string | null>(null);
   const [openRequest, setOpenRequest] = useState<string | null>(null);
@@ -211,10 +211,13 @@ function Dashboard({ password, onLogout }: { password: string; onLogout: () => v
         <div className="mb-5 inline-flex rounded-xl border border-border bg-white p-1 shadow-[var(--shadow-soft)]">
           <TabButton active={tab === "donors"} onClick={() => setTab("donors")} icon={Users}>Donors</TabButton>
           <TabButton active={tab === "requests"} onClick={() => setTab("requests")} icon={Inbox}>Patient requests</TabButton>
+          <TabButton active={tab === "audit"} onClick={() => setTab("audit")} icon={ScrollText}>Audit log</TabButton>
         </div>
 
         {tab === "donors" ? (
           <DonorsTab password={password} onChange={loadStats} onUnauthorized={onLogout} />
+        ) : tab === "audit" ? (
+          <AuditTab password={password} onUnauthorized={onLogout} />
         ) : openRequest ? (
           <RequestDetail
             password={password}
