@@ -427,7 +427,7 @@ export function ChatWidget() {
             <input
               ref={fileRef}
               type="file"
-              accept="image/*"
+              accept={reqStep === "requisition" ? "image/*,application/pdf" : "image/*"}
               className="hidden"
               onChange={(e) => {
                 const f = e.target.files?.[0];
@@ -438,9 +438,11 @@ export function ChatWidget() {
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              disabled={uploading || regStep !== "id_proof"}
-              aria-label="Attach ID proof photo"
-              title="Attach ID proof photo"
+              disabled={
+                uploading || (regStep !== "id_proof" && reqStep !== "requisition")
+              }
+              aria-label="Attach file"
+              title="Attach file"
               className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-40"
             >
               {uploading ? (
