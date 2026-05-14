@@ -19,10 +19,10 @@ const baseUrl = (
   "https://redstreamfoundation.org"
 ).replace(/\/$/, "");
 
-// Routes to probe. Acceptable statuses are 200/301/302/304.
+// Routes to probe. Acceptable statuses are 2xx and common redirects.
 // 404, 5xx, or network failure = test failure.
 const routes = ["/", "/admin", "/donor", "/request"];
-const ACCEPTABLE = new Set([200, 301, 302, 304]);
+const ACCEPTABLE = new Set([200, 301, 302, 304, 307, 308]);
 
 async function check(path) {
   const url = `${baseUrl}${path}`;
