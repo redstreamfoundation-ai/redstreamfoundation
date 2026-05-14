@@ -60,6 +60,7 @@ type Donor = {
   status: string;
   verified: boolean;
   created_at: string;
+  last_donation_date: string | null;
 };
 
 type RequestRow = {
