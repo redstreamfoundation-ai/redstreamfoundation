@@ -36,6 +36,7 @@ import {
   adminListAudit,
   adminUpdateDonor,
   adminDeleteDonor,
+  adminUpdateRequest,
 } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
