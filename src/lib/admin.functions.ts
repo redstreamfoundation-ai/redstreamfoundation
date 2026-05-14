@@ -1,0 +1,130 @@
+import { createServerFn } from "@tanstack/react-start";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+const ADMIN_PASSWORD = "redstream2026";
+
+function assertAdmin(password: unknown) {
+  if (typeof password !== "string" || password !== ADMIN_PASSWORD) {
+    throw new Error("Unauthorized");
+  }
+}
+
+export const adminLogin = createServerFn({ method: "POST" })
+  .inputValidator((d: { password: string }) => d)
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    return { ok: true };
+  });
+
+export const adminListDonors = createServerFn({ method: "POST" })
+  .inputValidator((d: { password: string }) => d)
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    const { data: donors, error } = await supabaseAdmin
+      .from("donors")
+      .select("id, full_name, phone, blood_group, locality, pincode, status, verified, created_at")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return { donors: donors ?? [] };
+  });
+
+export const adminListRequests = createServerFn({ method: "POST" })
+  .inputValidator((d: { password: string }) => d)
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    const { data: requests, error } = await supabaseAdmin
+      .from("blood_requests")
+      .select("id, attendant_name, attendant_phone, blood_group, hospital, locality, units, urgency, component, patient_age, status, admin_status, created_at")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return { requests: requests ?? [] };
+  });
+
+export const adminUpdateDonorStatus = createServerFn({ method: "POST" })
+  .inputValidator((d: { password: string; id: string; status: "approved" | "rejected" | "pending" }) => d)
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    const { error } = await supabaseAdmin
+      .from("donors")
+      .update({ status: data.status, verified: data.status === "approved" })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminUpdateRequestStatus = createServerFn({ method: "POST" })
+  .inputValidator((d: { password: string; id: string; status: "approved" | "rejected" | "pending" }) => d)
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    const { error } = await supabaseAdmin
+      .from("blood_requests")
+      .update({ admin_status: data.status })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// Simple compatibility groups for matching donations
+const COMPAT: Record<string, string[]> = {
+  "O-": ["O-"],
+  "O+": ["O+", "O-"],
+  "A-": ["A-", "O-"],
+  "A+": ["A+", "A-", "O+", "O-"],
+  "B-": ["B-", "O-"],
+  "B+": ["B+", "B-", "O+", "O-"],
+  "AB-": ["AB-", "A-", "B-", "O-"],
+  "AB+": ["AB+", "AB-", "A+", "A-", "B+", "B-", "O+", "O-"],
+};
+
+export const adminGetRequestDetail = createServerFn({ method: "POST" })
+  .inputValidator((d: { password: string; id: string }) => d)
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    const { data: req, error } = await supabaseAdmin
+      .from("blood_requests")
+      .select("*")
+      .eq("id", data.id)
+      .single();
+    if (error) throw new Error(error.message);
+
+    const groups = COMPAT[req.blood_group] ?? [req.blood_group];
+    const { data: donors, error: dErr } = await supabaseAdmin
+      .from("donors")
+      .select("id, full_name, phone, blood_group, locality, pincode, status")
+      .eq("status", "approved")
+      .in("blood_group", groups);
+    if (dErr) throw new Error(dErr.message);
+
+    // Sort by locality match (simple proximity heuristic)
+    const target = (req.locality || req.hospital || "").toLowerCase();
+    const sorted = [...(donors ?? [])].sort((a, b) => {
+      const al = (a.locality || "").toLowerCase();
+      const bl = (b.locality || "").toLowerCase();
+      const aMatch = target && al && (target.includes(al) || al.includes(target)) ? 0 : 1;
+      const bMatch = target && bl && (target.includes(bl) || bl.includes(target)) ? 0 : 1;
+      if (aMatch !== bMatch) return aMatch - bMatch;
+      return al.localeCompare(bl);
+    });
+
+    return { request: req, matches: sorted };
+  });
+
+export const adminGetStats = createServerFn({ method: "POST" })
+  .inputValidator((d: { password: string }) => d)
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    const [totalDonors, pendingDonors, approvedDonors, totalRequests, pendingRequests] = await Promise.all([
+      supabaseAdmin.from("donors").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("donors").select("id", { count: "exact", head: true }).eq("status", "pending"),
+      supabaseAdmin.from("donors").select("id", { count: "exact", head: true }).eq("status", "approved"),
+      supabaseAdmin.from("blood_requests").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("blood_requests").select("id", { count: "exact", head: true }).eq("admin_status", "pending"),
+    ]);
+    return {
+      totalDonors: totalDonors.count ?? 0,
+      pendingDonors: pendingDonors.count ?? 0,
+      approvedDonors: approvedDonors.count ?? 0,
+      totalRequests: totalRequests.count ?? 0,
+      pendingRequests: pendingRequests.count ?? 0,
+    };
+  });
