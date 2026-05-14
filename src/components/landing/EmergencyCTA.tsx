@@ -20,13 +20,13 @@ export function EmergencyCTA() {
                 Our coordinators will verify your request and start matching donors immediately.
               </p>
             </div>
-            <a
-              href="tel:+911140000000"
-              className="inline-flex w-full items-center justify-center gap-3 rounded-full bg-background px-6 py-4 text-base font-semibold text-primary shadow-[var(--shadow-soft)] transition-transform hover:scale-[1.02] md:w-auto"
+            <span
+              aria-label="Helpline launching June 2026"
+              className="inline-flex w-full items-center justify-center gap-3 rounded-full bg-background px-6 py-4 text-base font-semibold text-primary shadow-[var(--shadow-soft)] md:w-auto"
             >
               <Phone className="h-4 w-4" />
-              +91 11 4000 0000
-            </a>
+              Helpline launching June 2026
+            </span>
           </div>
         </div>
       </div>
