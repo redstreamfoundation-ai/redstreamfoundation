@@ -704,8 +704,9 @@ function FieldInput({
 }
 
 function RequestsTab({
-  onChange, onOpen, onUnauthorized,
-}: { onChange: () => void; onOpen: (id: string) => void; onUnauthorized: () => void }) {
+  source = "form", onChange, onOpen, onUnauthorized,
+}: { source?: "form" | "chatbot" | "all"; onChange: () => void; onOpen: (id: string) => void; onUnauthorized: () => void }) {
+  const showDocument = source === "chatbot";
   const [rows, setRows] = useState<RequestRow[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -722,7 +723,7 @@ function RequestsTab({
 
   async function load() {
     try {
-      const { requests } = await adminListRequests({});
+      const { requests } = await adminListRequests({ data: { source } });
       setRows(requests as RequestRow[]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to load";
@@ -730,7 +731,7 @@ function RequestsTab({
       else setErr(msg);
     }
   }
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [source]);
 
   async function setReqStatus(id: string, next: "approved" | "rejected" | "fulfilled" | "pending") {
     setBusyId(id);
@@ -740,6 +741,21 @@ function RequestsTab({
       onChange();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Update failed");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function deleteReq(r: RequestRow) {
+    const label = r.patient_name || r.attendant_name;
+    if (!window.confirm(`Delete request for "${label}"? This cannot be undone.`)) return;
+    setBusyId(r.id);
+    try {
+      await adminDeleteRequest({ data: { id: r.id } });
+      await load();
+      onChange();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Delete failed");
     } finally {
       setBusyId(null);
     }
