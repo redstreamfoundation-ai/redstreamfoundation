@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Check, FileSearch, ShieldCheck, Radio, Phone, Hash, Clock } from "lucide-react";
+import { Check, FileSearch, ShieldCheck, Radio, Phone, Hash, Clock, ArrowRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { StepShell } from "@/components/request/StepShell";
 import { useRequest } from "@/lib/request-store";
 import { useAuth } from "@/lib/auth-context";
@@ -201,6 +202,13 @@ function Submitted() {
           <Phone className="h-3.5 w-3.5" /> Call
         </span>
       </a>
+
+      <Link
+        to="/request/matching"
+        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-primary/40 bg-card px-6 py-3.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/5"
+      >
+        View status <ArrowRight className="h-4 w-4" />
+      </Link>
     </StepShell>
   );
 }
