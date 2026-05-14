@@ -38,17 +38,6 @@ function startupDiagnosticsPlugin() {
 }
 
 export default defineConfig({
-  // Keep TanStack Start internals out of Vite's dep optimizer — they rely
-  // on virtual imports injected by the TanStack Start plugin at runtime
-  // (#tanstack-start-entry, tanstack-start-manifest:v, etc.) and esbuild
-  // cannot resolve them at pre-bundle time.
-  optimizeDeps: {
-    exclude: [
-      "@tanstack/start-server-core",
-      "@tanstack/react-start",
-      "@tanstack/start-client-core",
-    ],
-  },
   plugins: [
     startupDiagnosticsPlugin(),
     tanstackRouter({
