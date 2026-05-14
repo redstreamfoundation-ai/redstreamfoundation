@@ -6,7 +6,11 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
   plugins: [
-    tanstackStart(),
+    tanstackStart({
+      router: {
+        autoCodeSplitting: true,
+      },
+    }),
     react(),
     tsconfigPaths(),
     tailwindcss(),
