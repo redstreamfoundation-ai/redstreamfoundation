@@ -183,6 +183,10 @@ export function LiveActivityFeed() {
               New emergency requests, donor matches and fulfilled cases stream in
               from our coordination database the moment they happen.
             </p>
+            <p className="mt-3 inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground/80">
+              <span className="inline-block h-1 w-1 rounded-full bg-muted-foreground/60" />
+              Sample data · Live feed activates at launch
+            </p>
           </div>
           <div className="flex items-center gap-3 md:col-span-4 md:justify-end">
             <span className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground">
