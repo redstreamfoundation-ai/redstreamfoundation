@@ -388,7 +388,12 @@ const PAGE_SIZES = [10, 25, 50, 100];
 
 type SortDir = "asc" | "desc";
 
-function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnauthorized: () => void }) {
+function DonorsTab({
+  source = "form",
+  onChange,
+  onUnauthorized,
+}: { source?: "form" | "chatbot" | "all"; onChange: () => void; onUnauthorized: () => void }) {
+  const showDocument = source === "chatbot";
   const [donors, setDonors] = useState<Donor[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -407,7 +412,7 @@ function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnaut
 
   async function load() {
     try {
-      const { donors } = await adminListDonors({});
+      const { donors } = await adminListDonors({ data: { source } });
       setDonors(donors as Donor[]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to load";
@@ -415,7 +420,7 @@ function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnaut
       else setErr(msg);
     }
   }
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [source]);
 
   async function setDonorStatus(id: string, next: "approved" | "rejected") {
     setBusyId(id);
