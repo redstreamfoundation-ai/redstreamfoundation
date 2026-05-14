@@ -987,12 +987,15 @@ function RequestDetail({
 }: { id: string; onBack: () => void; onUnauthorized: () => void }) {
   const [data, setData] = useState<RequestDetailData | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const PAGE_SIZE = 10;
+  const [visible, setVisible] = useState(PAGE_SIZE);
 
   useEffect(() => {
     (async () => {
       try {
         const res = await adminGetRequestDetail({ data: { id } });
         setData(res as RequestDetailData);
+        setVisible(PAGE_SIZE);
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Failed to load";
         if (msg.includes("Unauthorized")) onUnauthorized();
@@ -1048,7 +1051,7 @@ function RequestDetail({
                 <tbody className="divide-y divide-border">
                   {data.matches.length === 0 ? (
                     <tr><td colSpan={5} className="px-5 py-8 text-center text-sm text-muted-foreground">No verified donors match this blood group yet.</td></tr>
-                  ) : data.matches.map((d) => (
+                  ) : data.matches.slice(0, visible).map((d) => (
                     <tr key={d.id} className="hover:bg-secondary/40">
                       <Td className="font-medium text-foreground">{d.full_name}</Td>
                       <Td>
@@ -1064,6 +1067,42 @@ function RequestDetail({
                 </tbody>
               </table>
             </TableScroll>
+            {data.matches.length > visible ? (
+              <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-3">
+                <span className="text-[11px] text-muted-foreground">
+                  Showing {visible} of {data.matches.length}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setVisible((v) => Math.min(v + PAGE_SIZE, data.matches.length))}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary"
+                  >
+                    Load more
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVisible(data.matches.length)}
+                    className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                  >
+                    Show all
+                  </button>
+                </div>
+              </div>
+            ) : data.matches.length > PAGE_SIZE ? (
+              <div className="flex items-center justify-between gap-3 border-t border-border px-5 py-3">
+                <span className="text-[11px] text-muted-foreground">
+                  Showing all {data.matches.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setVisible(PAGE_SIZE)}
+                  className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                >
+                  Show less
+                </button>
+              </div>
+            ) : null}
           </Card>
         </>
       )}
