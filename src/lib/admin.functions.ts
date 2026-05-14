@@ -120,7 +120,7 @@ export const adminDeleteDonor = createServerFn({ method: "POST" })
 
 export const adminUpdateRequestStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; status: "approved" | "rejected" | "pending" }) => d)
+  .inputValidator((d: { id: string; status: "approved" | "rejected" | "pending" | "fulfilled" }) => d)
   .handler(async ({ data, context }) => {
     await assertAdminRole(context.userId);
     const { data: existing } = await supabaseAdmin
@@ -140,6 +140,47 @@ export const adminUpdateRequestStatus = createServerFn({ method: "POST" })
       target_type: "request",
       target_id: data.id,
       target_label: label,
+      actor: await actorEmail(context.userId),
+    });
+    return { ok: true };
+  });
+
+export const adminUpdateRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: {
+    id: string;
+    attendant_name: string;
+    attendant_phone: string;
+    blood_group: string;
+    hospital: string;
+    locality: string;
+    units: number;
+    component: string;
+    urgency: string;
+    patient_age: string | null;
+  }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAdminRole(context.userId);
+    const { error } = await supabaseAdmin
+      .from("blood_requests")
+      .update({
+        attendant_name: data.attendant_name,
+        attendant_phone: data.attendant_phone,
+        blood_group: data.blood_group,
+        hospital: data.hospital,
+        locality: data.locality,
+        units: data.units,
+        component: data.component,
+        urgency: data.urgency as "critical" | "planned" | "within-24h" | "within-2h",
+        patient_age: data.patient_age,
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("admin_audit_log").insert({
+      action: "edit",
+      target_type: "request",
+      target_id: data.id,
+      target_label: `${data.attendant_name} · ${data.blood_group} · ${data.hospital}`,
       actor: await actorEmail(context.userId),
     });
     return { ok: true };
