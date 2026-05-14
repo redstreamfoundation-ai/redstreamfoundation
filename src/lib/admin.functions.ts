@@ -155,3 +155,17 @@ export const adminGetStats = createServerFn({ method: "POST" })
       pendingRequests: pendingRequests.count ?? 0,
     };
   });
+
+export const adminListAudit = createServerFn({ method: "POST" })
+  .inputValidator((d: { password: string; limit?: number }) => d)
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    const limit = Math.min(Math.max(data.limit ?? 500, 1), 2000);
+    const { data: rows, error } = await supabaseAdmin
+      .from("admin_audit_log")
+      .select("id, action, target_type, target_id, target_label, actor, created_at")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) throw new Error(error.message);
+    return { entries: rows ?? [] };
+  });
