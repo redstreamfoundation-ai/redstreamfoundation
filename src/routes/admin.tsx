@@ -25,6 +25,11 @@ import {
   Pencil,
   Trash2,
   X,
+  Settings as SettingsIcon,
+  Bell,
+  MessageSquare,
+  Mail,
+  Shield,
 } from "lucide-react";
 import {
   adminListDonors,
@@ -37,6 +42,8 @@ import {
   adminUpdateDonor,
   adminDeleteDonor,
   adminUpdateRequest,
+  adminGetSettings,
+  adminUpdateSettings,
 } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
