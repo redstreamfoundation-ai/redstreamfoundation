@@ -31,10 +31,12 @@ function ComingSoon() {
 
   useEffect(() => {
     const host = window.location.hostname;
+    const params = new URLSearchParams(window.location.search);
+    const forcePreview = params.get("preview") === "1";
     const isLiveDomain =
       host === "redstreamfoundation.org" ||
       host === "www.redstreamfoundation.org";
-    if (!isLiveDomain) {
+    if (!isLiveDomain && !forcePreview) {
       navigate({ to: "/home", replace: true });
     } else {
       setReady(true);
