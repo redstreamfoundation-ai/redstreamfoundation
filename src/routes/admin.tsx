@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   Droplet,
   ShieldCheck,
@@ -15,6 +15,13 @@ import {
   Building2,
   Clock,
   HeartPulse,
+  Search,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  ChevronLeft,
+  ChevronRight,
+  ScrollText,
 } from "lucide-react";
 import {
   adminLogin,
@@ -24,6 +31,7 @@ import {
   adminUpdateRequestStatus,
   adminGetRequestDetail,
   adminGetStats,
+  adminListAudit,
 } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
@@ -149,7 +157,7 @@ function LoginScreen({ onSuccess }: { onSuccess: (pw: string) => void }) {
 }
 
 function Dashboard({ password, onLogout }: { password: string; onLogout: () => void }) {
-  const [tab, setTab] = useState<"donors" | "requests">("donors");
+  const [tab, setTab] = useState<"donors" | "requests" | "audit">("donors");
   const [stats, setStats] = useState<Stats | null>(null);
   const [statsErr, setStatsErr] = useState<string | null>(null);
   const [openRequest, setOpenRequest] = useState<string | null>(null);
@@ -203,10 +211,13 @@ function Dashboard({ password, onLogout }: { password: string; onLogout: () => v
         <div className="mb-5 inline-flex rounded-xl border border-border bg-white p-1 shadow-[var(--shadow-soft)]">
           <TabButton active={tab === "donors"} onClick={() => setTab("donors")} icon={Users}>Donors</TabButton>
           <TabButton active={tab === "requests"} onClick={() => setTab("requests")} icon={Inbox}>Patient requests</TabButton>
+          <TabButton active={tab === "audit"} onClick={() => setTab("audit")} icon={ScrollText}>Audit log</TabButton>
         </div>
 
         {tab === "donors" ? (
           <DonorsTab password={password} onChange={loadStats} onUnauthorized={onLogout} />
+        ) : tab === "audit" ? (
+          <AuditTab password={password} onUnauthorized={onLogout} />
         ) : openRequest ? (
           <RequestDetail
             password={password}
@@ -320,10 +331,26 @@ function fmtDate(s: string) {
   try { return new Date(s).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }); } catch { return s; }
 }
 
+const BLOOD_GROUPS = ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"];
+const PAGE_SIZES = [10, 25, 50, 100];
+
+type SortDir = "asc" | "desc";
+
 function DonorsTab({ password, onChange, onUnauthorized }: { password: string; onChange: () => void; onUnauthorized: () => void }) {
   const [donors, setDonors] = useState<Donor[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  const [search, setSearch] = useState("");
+  const [bg, setBg] = useState("all");
+  const [locality, setLocality] = useState("");
+  const [status, setStatus] = useState("all");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [sortKey, setSortKey] = useState<keyof Donor>("created_at");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   async function load() {
     try {
@@ -337,10 +364,10 @@ function DonorsTab({ password, onChange, onUnauthorized }: { password: string; o
   }
   useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
 
-  async function setStatus(id: string, status: "approved" | "rejected") {
+  async function setDonorStatus(id: string, next: "approved" | "rejected") {
     setBusyId(id);
     try {
-      await adminUpdateDonorStatus({ data: { password, id, status } });
+      await adminUpdateDonorStatus({ data: { password, id, status: next } });
       await load();
       onChange();
     } catch (e) {
@@ -350,23 +377,97 @@ function DonorsTab({ password, onChange, onUnauthorized }: { password: string; o
     }
   }
 
+  const filtered = useMemo(() => {
+    if (!donors) return null;
+    const q = search.trim().toLowerCase();
+    const loc = locality.trim().toLowerCase();
+    const fromTs = from ? new Date(from).getTime() : null;
+    const toTs = to ? new Date(to).getTime() + 24 * 3600 * 1000 - 1 : null;
+    const rows = donors.filter((d) => {
+      if (q && !`${d.full_name} ${d.phone} ${d.locality} ${d.pincode}`.toLowerCase().includes(q)) return false;
+      if (bg !== "all" && d.blood_group !== bg) return false;
+      if (status !== "all" && d.status !== status) return false;
+      if (loc && !d.locality.toLowerCase().includes(loc)) return false;
+      const ts = new Date(d.created_at).getTime();
+      if (fromTs && ts < fromTs) return false;
+      if (toTs && ts > toTs) return false;
+      return true;
+    });
+    rows.sort((a, b) => {
+      const av = a[sortKey] ?? "";
+      const bv = b[sortKey] ?? "";
+      const r = String(av).localeCompare(String(bv), undefined, { numeric: true });
+      return sortDir === "asc" ? r : -r;
+    });
+    return rows;
+  }, [donors, search, bg, locality, status, from, to, sortKey, sortDir]);
+
+  useEffect(() => { setPage(1); }, [search, bg, locality, status, from, to, pageSize]);
+
+  function toggleSort(key: keyof Donor) {
+    if (sortKey === key) setSortDir(sortDir === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDir("asc"); }
+  }
+
+  const total = filtered?.length ?? 0;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const pageRows = filtered ? filtered.slice((page - 1) * pageSize, page * pageSize) : null;
+
   return (
     <Card>
-      <TableHeader title="Donor signups" count={donors?.length} />
+      <TableHeader title="Donor signups" count={total} />
+      <div className="grid gap-2 border-b border-border bg-secondary/30 px-5 py-3 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="lg:col-span-2 relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search name, phone, locality…"
+            className="w-full rounded-md border border-border bg-white pl-8 pr-2 py-1.5 text-xs outline-none focus:border-primary"
+          />
+        </div>
+        <FilterSelect value={bg} onChange={setBg} label="Blood">
+          <option value="all">All blood</option>
+          {BLOOD_GROUPS.map((g) => <option key={g} value={g}>{g}</option>)}
+        </FilterSelect>
+        <FilterSelect value={status} onChange={setStatus} label="Status">
+          <option value="all">All status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </FilterSelect>
+        <input
+          value={locality}
+          onChange={(e) => setLocality(e.target.value)}
+          placeholder="Locality"
+          className="rounded-md border border-border bg-white px-2 py-1.5 text-xs outline-none focus:border-primary"
+        />
+        <div className="flex items-center gap-1">
+          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full rounded-md border border-border bg-white px-2 py-1.5 text-xs outline-none focus:border-primary" />
+          <span className="text-xs text-muted-foreground">–</span>
+          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full rounded-md border border-border bg-white px-2 py-1.5 text-xs outline-none focus:border-primary" />
+        </div>
+      </div>
       {err ? <div className="px-5 py-3 text-xs text-red-600">{err}</div> : null}
       <TableScroll>
         <table className="w-full text-sm">
           <thead className="bg-secondary/60 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             <tr>
-              <Th>Name</Th><Th>Phone</Th><Th>Blood</Th><Th>Location</Th><Th>Signed up</Th><Th>Status</Th><Th className="text-right">Actions</Th>
+              <SortTh label="Name" col="full_name" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("full_name")} />
+              <Th>Phone</Th>
+              <SortTh label="Blood" col="blood_group" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("blood_group")} />
+              <SortTh label="Location" col="locality" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("locality")} />
+              <SortTh label="Signed up" col="created_at" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("created_at")} />
+              <SortTh label="Status" col="status" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("status")} />
+              <Th className="text-right">Actions</Th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {donors === null ? (
+            {pageRows === null ? (
               <tr><td colSpan={7} className="px-5 py-8 text-center text-sm text-muted-foreground"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>
-            ) : donors.length === 0 ? (
-              <tr><td colSpan={7} className="px-5 py-8 text-center text-sm text-muted-foreground">No donor signups yet.</td></tr>
-            ) : donors.map((d) => (
+            ) : pageRows.length === 0 ? (
+              <tr><td colSpan={7} className="px-5 py-8 text-center text-sm text-muted-foreground">No donors match these filters.</td></tr>
+            ) : pageRows.map((d) => (
               <tr key={d.id} className="hover:bg-secondary/40">
                 <Td className="font-medium text-foreground">{d.full_name}</Td>
                 <Td>{d.phone}</Td>
@@ -378,8 +479,8 @@ function DonorsTab({ password, onChange, onUnauthorized }: { password: string; o
                   <ActionButtons
                     status={d.status}
                     busy={busyId === d.id}
-                    onApprove={() => setStatus(d.id, "approved")}
-                    onReject={() => setStatus(d.id, "rejected")}
+                    onApprove={() => setDonorStatus(d.id, "approved")}
+                    onReject={() => setDonorStatus(d.id, "rejected")}
                   />
                 </Td>
               </tr>
@@ -387,6 +488,7 @@ function DonorsTab({ password, onChange, onUnauthorized }: { password: string; o
           </tbody>
         </table>
       </TableScroll>
+      <Pagination page={page} pageCount={pageCount} pageSize={pageSize} total={total} onPage={setPage} onPageSize={setPageSize} />
     </Card>
   );
 }
@@ -397,6 +499,15 @@ function RequestsTab({
   const [rows, setRows] = useState<RequestRow[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  const [search, setSearch] = useState("");
+  const [bg, setBg] = useState("all");
+  const [hospital, setHospital] = useState("");
+  const [status, setStatus] = useState("all");
+  const [sortKey, setSortKey] = useState<keyof RequestRow>("created_at");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   async function load() {
     try {
@@ -410,10 +521,10 @@ function RequestsTab({
   }
   useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
 
-  async function setStatus(id: string, status: "approved" | "rejected") {
+  async function setReqStatus(id: string, next: "approved" | "rejected") {
     setBusyId(id);
     try {
-      await adminUpdateRequestStatus({ data: { password, id, status } });
+      await adminUpdateRequestStatus({ data: { password, id, status: next } });
       await load();
       onChange();
     } catch (e) {
@@ -423,23 +534,88 @@ function RequestsTab({
     }
   }
 
+  const filtered = useMemo(() => {
+    if (!rows) return null;
+    const q = search.trim().toLowerCase();
+    const hosp = hospital.trim().toLowerCase();
+    const out = rows.filter((r) => {
+      if (q && !`${r.attendant_name} ${r.attendant_phone} ${r.hospital} ${r.locality}`.toLowerCase().includes(q)) return false;
+      if (bg !== "all" && r.blood_group !== bg) return false;
+      if (hosp && !r.hospital.toLowerCase().includes(hosp)) return false;
+      if (status !== "all" && r.admin_status !== status) return false;
+      return true;
+    });
+    out.sort((a, b) => {
+      const av = a[sortKey] ?? "";
+      const bv = b[sortKey] ?? "";
+      const r = String(av).localeCompare(String(bv), undefined, { numeric: true });
+      return sortDir === "asc" ? r : -r;
+    });
+    return out;
+  }, [rows, search, bg, hospital, status, sortKey, sortDir]);
+
+  useEffect(() => { setPage(1); }, [search, bg, hospital, status, pageSize]);
+
+  function toggleSort(key: keyof RequestRow) {
+    if (sortKey === key) setSortDir(sortDir === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDir("asc"); }
+  }
+
+  const total = filtered?.length ?? 0;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const pageRows = filtered ? filtered.slice((page - 1) * pageSize, page * pageSize) : null;
+
   return (
     <Card>
-      <TableHeader title="Patient requests" count={rows?.length} />
+      <TableHeader title="Patient requests" count={total} />
+      <div className="grid gap-2 border-b border-border bg-secondary/30 px-5 py-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="lg:col-span-2 relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search name, phone, hospital…"
+            className="w-full rounded-md border border-border bg-white pl-8 pr-2 py-1.5 text-xs outline-none focus:border-primary"
+          />
+        </div>
+        <FilterSelect value={status} onChange={setStatus} label="Status">
+          <option value="all">All status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </FilterSelect>
+        <FilterSelect value={bg} onChange={setBg} label="Blood">
+          <option value="all">All blood</option>
+          {BLOOD_GROUPS.map((g) => <option key={g} value={g}>{g}</option>)}
+        </FilterSelect>
+        <input
+          value={hospital}
+          onChange={(e) => setHospital(e.target.value)}
+          placeholder="Hospital"
+          className="rounded-md border border-border bg-white px-2 py-1.5 text-xs outline-none focus:border-primary"
+        />
+      </div>
       {err ? <div className="px-5 py-3 text-xs text-red-600">{err}</div> : null}
       <TableScroll>
         <table className="w-full text-sm">
           <thead className="bg-secondary/60 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             <tr>
-              <Th>Patient contact</Th><Th>Blood</Th><Th>Hospital</Th><Th>Phone</Th><Th>Units</Th><Th>Submitted</Th><Th>Status</Th><Th className="text-right">Actions</Th>
+              <SortTh label="Patient contact" col="attendant_name" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("attendant_name")} />
+              <SortTh label="Blood" col="blood_group" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("blood_group")} />
+              <SortTh label="Hospital" col="hospital" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("hospital")} />
+              <Th>Phone</Th>
+              <SortTh label="Units" col="units" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("units")} />
+              <SortTh label="Submitted" col="created_at" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("created_at")} />
+              <SortTh label="Status" col="admin_status" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("admin_status")} />
+              <Th className="text-right">Actions</Th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {rows === null ? (
+            {pageRows === null ? (
               <tr><td colSpan={8} className="px-5 py-8 text-center text-sm text-muted-foreground"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>
-            ) : rows.length === 0 ? (
-              <tr><td colSpan={8} className="px-5 py-8 text-center text-sm text-muted-foreground">No patient requests yet.</td></tr>
-            ) : rows.map((r) => (
+            ) : pageRows.length === 0 ? (
+              <tr><td colSpan={8} className="px-5 py-8 text-center text-sm text-muted-foreground">No requests match these filters.</td></tr>
+            ) : pageRows.map((r) => (
               <tr
                 key={r.id}
                 onClick={() => r.admin_status === "approved" && onOpen(r.id)}
@@ -456,8 +632,8 @@ function RequestsTab({
                   <ActionButtons
                     status={r.admin_status}
                     busy={busyId === r.id}
-                    onApprove={() => setStatus(r.id, "approved")}
-                    onReject={() => setStatus(r.id, "rejected")}
+                    onApprove={() => setReqStatus(r.id, "approved")}
+                    onReject={() => setReqStatus(r.id, "rejected")}
                   />
                 </Td>
               </tr>
@@ -465,6 +641,7 @@ function RequestsTab({
           </tbody>
         </table>
       </TableScroll>
+      <Pagination page={page} pageCount={pageCount} pageSize={pageSize} total={total} onPage={setPage} onPageSize={setPageSize} />
       {rows && rows.some((r) => r.admin_status === "approved") ? (
         <div className="border-t border-border px-5 py-2.5 text-[11px] text-muted-foreground">
           Tip: click any approved request to view matched donors.
@@ -600,4 +777,180 @@ function Th({ children, className = "" }: { children: React.ReactNode; className
 }
 function Td({ children, className = "", onClick }: { children: React.ReactNode; className?: string; onClick?: (e: React.MouseEvent) => void }) {
   return <td onClick={onClick} className={`px-5 py-3 text-sm text-foreground ${className}`}>{children}</td>;
+}
+
+function FilterSelect({
+  value, onChange, label, children,
+}: { value: string; onChange: (v: string) => void; label: string; children: React.ReactNode }) {
+  return (
+    <select
+      aria-label={label}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="rounded-md border border-border bg-white px-2 py-1.5 text-xs outline-none focus:border-primary"
+    >
+      {children}
+    </select>
+  );
+}
+
+function SortTh<T extends string>({
+  label, col, sortKey, sortDir, onSort,
+}: { label: string; col: T; sortKey: string; sortDir: SortDir; onSort: () => void }) {
+  const active = sortKey === col;
+  const Icon = !active ? ArrowUpDown : sortDir === "asc" ? ArrowUp : ArrowDown;
+  return (
+    <th className="px-5 py-3 text-left">
+      <button onClick={onSort} className={`inline-flex items-center gap-1 ${active ? "text-foreground" : ""}`}>
+        {label}
+        <Icon className="h-3 w-3" />
+      </button>
+    </th>
+  );
+}
+
+function Pagination({
+  page, pageCount, pageSize, total, onPage, onPageSize,
+}: { page: number; pageCount: number; pageSize: number; total: number; onPage: (n: number) => void; onPageSize: (n: number) => void }) {
+  const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const end = Math.min(page * pageSize, total);
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-5 py-2.5 text-xs text-muted-foreground">
+      <div className="flex items-center gap-2">
+        <span>Rows per page:</span>
+        <select
+          value={pageSize}
+          onChange={(e) => onPageSize(Number(e.target.value))}
+          className="rounded-md border border-border bg-white px-1.5 py-1 text-xs outline-none focus:border-primary"
+        >
+          {PAGE_SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
+      <div className="flex items-center gap-3">
+        <span>{start}–{end} of {total}</span>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onPage(Math.max(1, page - 1))}
+            disabled={page <= 1}
+            className="grid h-7 w-7 place-items-center rounded-md border border-border bg-white disabled:opacity-40"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </button>
+          <span className="px-1">{page} / {pageCount}</span>
+          <button
+            onClick={() => onPage(Math.min(pageCount, page + 1))}
+            disabled={page >= pageCount}
+            className="grid h-7 w-7 place-items-center rounded-md border border-border bg-white disabled:opacity-40"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type AuditEntry = {
+  id: string;
+  action: string;
+  target_type: string;
+  target_id: string;
+  target_label: string | null;
+  actor: string;
+  created_at: string;
+};
+
+function AuditTab({ password, onUnauthorized }: { password: string; onUnauthorized: () => void }) {
+  const [entries, setEntries] = useState<AuditEntry[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [type, setType] = useState("all");
+  const [action, setAction] = useState("all");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { entries } = await adminListAudit({ data: { password, limit: 1000 } });
+        setEntries(entries as AuditEntry[]);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Failed to load";
+        if (msg.includes("Unauthorized")) onUnauthorized();
+        else setErr(msg);
+      }
+    })();
+    // eslint-disable-next-line
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (!entries) return null;
+    const q = search.trim().toLowerCase();
+    return entries.filter((e) => {
+      if (q && !`${e.target_label ?? ""} ${e.actor}`.toLowerCase().includes(q)) return false;
+      if (type !== "all" && e.target_type !== type) return false;
+      if (action !== "all" && e.action !== action) return false;
+      return true;
+    });
+  }, [entries, search, type, action]);
+
+  useEffect(() => { setPage(1); }, [search, type, action, pageSize]);
+
+  const total = filtered?.length ?? 0;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const pageRows = filtered ? filtered.slice((page - 1) * pageSize, page * pageSize) : null;
+
+  return (
+    <Card>
+      <TableHeader title="Audit log" count={total} />
+      <div className="grid gap-2 border-b border-border bg-secondary/30 px-5 py-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="lg:col-span-2 relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search target or actor…"
+            className="w-full rounded-md border border-border bg-white pl-8 pr-2 py-1.5 text-xs outline-none focus:border-primary"
+          />
+        </div>
+        <FilterSelect value={type} onChange={setType} label="Target type">
+          <option value="all">All types</option>
+          <option value="donor">Donors</option>
+          <option value="request">Requests</option>
+        </FilterSelect>
+        <FilterSelect value={action} onChange={setAction} label="Action">
+          <option value="all">All actions</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="pending">Reset to pending</option>
+        </FilterSelect>
+      </div>
+      {err ? <div className="px-5 py-3 text-xs text-red-600">{err}</div> : null}
+      <TableScroll>
+        <table className="w-full text-sm">
+          <thead className="bg-secondary/60 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <tr>
+              <Th>When</Th><Th>Actor</Th><Th>Action</Th><Th>Type</Th><Th>Target</Th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {pageRows === null ? (
+              <tr><td colSpan={5} className="px-5 py-8 text-center text-sm text-muted-foreground"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>
+            ) : pageRows.length === 0 ? (
+              <tr><td colSpan={5} className="px-5 py-8 text-center text-sm text-muted-foreground">No audit entries yet.</td></tr>
+            ) : pageRows.map((e) => (
+              <tr key={e.id} className="hover:bg-secondary/40">
+                <Td className="text-muted-foreground whitespace-nowrap">{fmtDate(e.created_at)}</Td>
+                <Td className="font-medium text-foreground">{e.actor}</Td>
+                <Td><StatusBadge status={e.action} /></Td>
+                <Td className="capitalize">{e.target_type}</Td>
+                <Td>{e.target_label || <span className="text-muted-foreground">{e.target_id.slice(0, 8)}…</span>}</Td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TableScroll>
+      <Pagination page={page} pageCount={pageCount} pageSize={pageSize} total={total} onPage={setPage} onPageSize={setPageSize} />
+    </Card>
+  );
 }

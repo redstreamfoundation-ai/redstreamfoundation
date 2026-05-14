@@ -44,11 +44,23 @@ export const adminUpdateDonorStatus = createServerFn({ method: "POST" })
   .inputValidator((d: { password: string; id: string; status: "approved" | "rejected" | "pending" }) => d)
   .handler(async ({ data }) => {
     assertAdmin(data.password);
+    const { data: existing } = await supabaseAdmin
+      .from("donors")
+      .select("full_name")
+      .eq("id", data.id)
+      .single();
     const { error } = await supabaseAdmin
       .from("donors")
       .update({ status: data.status, verified: data.status === "approved" })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
+    await supabaseAdmin.from("admin_audit_log").insert({
+      action: data.status,
+      target_type: "donor",
+      target_id: data.id,
+      target_label: existing?.full_name ?? null,
+      actor: "admin",
+    });
     return { ok: true };
   });
 
@@ -56,11 +68,26 @@ export const adminUpdateRequestStatus = createServerFn({ method: "POST" })
   .inputValidator((d: { password: string; id: string; status: "approved" | "rejected" | "pending" }) => d)
   .handler(async ({ data }) => {
     assertAdmin(data.password);
+    const { data: existing } = await supabaseAdmin
+      .from("blood_requests")
+      .select("attendant_name, hospital, blood_group")
+      .eq("id", data.id)
+      .single();
     const { error } = await supabaseAdmin
       .from("blood_requests")
       .update({ admin_status: data.status })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
+    const label = existing
+      ? `${existing.attendant_name} · ${existing.blood_group} · ${existing.hospital}`
+      : null;
+    await supabaseAdmin.from("admin_audit_log").insert({
+      action: data.status,
+      target_type: "request",
+      target_id: data.id,
+      target_label: label,
+      actor: "admin",
+    });
     return { ok: true };
   });
 
@@ -127,4 +154,18 @@ export const adminGetStats = createServerFn({ method: "POST" })
       totalRequests: totalRequests.count ?? 0,
       pendingRequests: pendingRequests.count ?? 0,
     };
+  });
+
+export const adminListAudit = createServerFn({ method: "POST" })
+  .inputValidator((d: { password: string; limit?: number }) => d)
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    const limit = Math.min(Math.max(data.limit ?? 500, 1), 2000);
+    const { data: rows, error } = await supabaseAdmin
+      .from("admin_audit_log")
+      .select("id, action, target_type, target_id, target_label, actor, created_at")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) throw new Error(error.message);
+    return { entries: rows ?? [] };
   });
