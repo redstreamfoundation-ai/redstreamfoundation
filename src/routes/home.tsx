@@ -14,6 +14,7 @@ import { CoverageMap } from "@/components/landing/CoverageMap";
 import { ImpactStories } from "@/components/landing/ImpactStories";
 import { FounderMission } from "@/components/landing/FounderMission";
 import { DelhiPilot } from "@/components/landing/DelhiPilot";
+import { SupportMission } from "@/components/landing/SupportMission";
 
 export const Route = createFileRoute("/home")({
   component: Index,
@@ -57,6 +58,7 @@ function Index() {
         <CoverageMap />
         <ImpactStories />
         <TrustVerification />
+        <SupportMission />
         <EmergencyCTA />
       </main>
       <Footer />
