@@ -37,9 +37,15 @@ function AuthPage() {
 
   useEffect(() => {
     if (!loading && session) {
-      navigate({ to: redirect, replace: true });
+      // Reconcile role for OAuth (Google) sign-ins, which don't carry metadata.
+      const stashed =
+        (typeof window !== "undefined" && window.localStorage.getItem("rs_intended_role")) || intendedRole;
+      supabase.rpc("ensure_my_role", { _intended: stashed }).then(() => {
+        try { window.localStorage.removeItem("rs_intended_role"); } catch {}
+        navigate({ to: redirect, replace: true });
+      });
     }
-  }, [session, loading, navigate, redirect]);
+  }, [session, loading, navigate, redirect, intendedRole]);
 
   // Wait until handle_new_user trigger has written a row in user_roles
   // before forwarding to the registration / request form.
@@ -113,6 +119,7 @@ function AuthPage() {
   const google = async () => {
     setError(null);
     setBusy(true);
+    try { window.localStorage.setItem("rs_intended_role", intendedRole); } catch {}
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: `${window.location.origin}/auth?redirect=${encodeURIComponent(redirect)}`,
     });
