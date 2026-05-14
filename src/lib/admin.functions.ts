@@ -186,17 +186,6 @@ export const adminUpdateRequest = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-const COMPAT: Record<string, string[]> = {
-  "O-": ["O-"],
-  "O+": ["O+", "O-"],
-  "A-": ["A-", "O-"],
-  "A+": ["A+", "A-", "O+", "O-"],
-  "B-": ["B-", "O-"],
-  "B+": ["B+", "B-", "O+", "O-"],
-  "AB-": ["AB-", "A-", "B-", "O-"],
-  "AB+": ["AB+", "AB-", "A+", "A-", "B+", "B-", "O+", "O-"],
-};
-
 export const adminGetRequestDetail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => d)
@@ -206,12 +195,11 @@ export const adminGetRequestDetail = createServerFn({ method: "POST" })
       .from("blood_requests").select("*").eq("id", data.id).single();
     if (error) throw new Error(error.message);
 
-    const groups = COMPAT[req.blood_group] ?? [req.blood_group];
     const { data: donors, error: dErr } = await supabaseAdmin
       .from("donors")
-      .select("id, full_name, phone, blood_group, locality, pincode, status")
+      .select("id, full_name, phone, blood_group, locality, pincode, status, last_donation_date")
       .eq("status", "approved")
-      .in("blood_group", groups);
+      .eq("blood_group", req.blood_group);
     if (dErr) throw new Error(dErr.message);
 
     const target = (req.locality || req.hospital || "").toLowerCase();
