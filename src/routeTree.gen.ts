@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RequestRouteImport } from './routes/request'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as HomeRouteImport } from './routes/home'
@@ -33,6 +34,11 @@ import { Route as DonorDashboardRouteImport } from './routes/donor.dashboard'
 import { Route as DonorCoordinateRouteImport } from './routes/donor.coordinate'
 import { Route as DonorAvailabilityRouteImport } from './routes/donor.availability'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RequestRoute = RequestRouteImport.update({
   id: '/request',
   path: '/request',
@@ -157,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof HomeRoute
   '/privacy': typeof PrivacyRoute
   '/request': typeof RequestRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/donor/availability': typeof DonorAvailabilityRoute
   '/donor/coordinate': typeof DonorCoordinateRoute
   '/donor/dashboard': typeof DonorDashboardRoute
@@ -180,6 +187,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/home': typeof HomeRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/donor/availability': typeof DonorAvailabilityRoute
   '/donor/coordinate': typeof DonorCoordinateRoute
   '/donor/dashboard': typeof DonorDashboardRoute
@@ -206,6 +214,7 @@ export interface FileRoutesById {
   '/home': typeof HomeRoute
   '/privacy': typeof PrivacyRoute
   '/request': typeof RequestRouteWithChildren
+  '/reset-password': typeof ResetPasswordRoute
   '/donor/availability': typeof DonorAvailabilityRoute
   '/donor/coordinate': typeof DonorCoordinateRoute
   '/donor/dashboard': typeof DonorDashboardRoute
@@ -233,6 +242,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/privacy'
     | '/request'
+    | '/reset-password'
     | '/donor/availability'
     | '/donor/coordinate'
     | '/donor/dashboard'
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/home'
     | '/privacy'
+    | '/reset-password'
     | '/donor/availability'
     | '/donor/coordinate'
     | '/donor/dashboard'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/privacy'
     | '/request'
+    | '/reset-password'
     | '/donor/availability'
     | '/donor/coordinate'
     | '/donor/dashboard'
@@ -307,10 +319,18 @@ export interface RootRouteChildren {
   HomeRoute: typeof HomeRoute
   PrivacyRoute: typeof PrivacyRoute
   RequestRoute: typeof RequestRouteWithChildren
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/request': {
       id: '/request'
       path: '/request'
@@ -532,6 +552,7 @@ const rootRouteChildren: RootRouteChildren = {
   HomeRoute: HomeRoute,
   PrivacyRoute: PrivacyRoute,
   RequestRoute: RequestRouteWithChildren,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
