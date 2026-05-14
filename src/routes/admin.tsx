@@ -778,3 +778,179 @@ function Th({ children, className = "" }: { children: React.ReactNode; className
 function Td({ children, className = "", onClick }: { children: React.ReactNode; className?: string; onClick?: (e: React.MouseEvent) => void }) {
   return <td onClick={onClick} className={`px-5 py-3 text-sm text-foreground ${className}`}>{children}</td>;
 }
+
+function FilterSelect({
+  value, onChange, label, children,
+}: { value: string; onChange: (v: string) => void; label: string; children: React.ReactNode }) {
+  return (
+    <select
+      aria-label={label}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="rounded-md border border-border bg-white px-2 py-1.5 text-xs outline-none focus:border-primary"
+    >
+      {children}
+    </select>
+  );
+}
+
+function SortTh<T extends string>({
+  label, col, sortKey, sortDir, onSort,
+}: { label: string; col: T; sortKey: string; sortDir: SortDir; onSort: () => void }) {
+  const active = sortKey === col;
+  const Icon = !active ? ArrowUpDown : sortDir === "asc" ? ArrowUp : ArrowDown;
+  return (
+    <th className="px-5 py-3 text-left">
+      <button onClick={onSort} className={`inline-flex items-center gap-1 ${active ? "text-foreground" : ""}`}>
+        {label}
+        <Icon className="h-3 w-3" />
+      </button>
+    </th>
+  );
+}
+
+function Pagination({
+  page, pageCount, pageSize, total, onPage, onPageSize,
+}: { page: number; pageCount: number; pageSize: number; total: number; onPage: (n: number) => void; onPageSize: (n: number) => void }) {
+  const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const end = Math.min(page * pageSize, total);
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-5 py-2.5 text-xs text-muted-foreground">
+      <div className="flex items-center gap-2">
+        <span>Rows per page:</span>
+        <select
+          value={pageSize}
+          onChange={(e) => onPageSize(Number(e.target.value))}
+          className="rounded-md border border-border bg-white px-1.5 py-1 text-xs outline-none focus:border-primary"
+        >
+          {PAGE_SIZES.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </div>
+      <div className="flex items-center gap-3">
+        <span>{start}–{end} of {total}</span>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onPage(Math.max(1, page - 1))}
+            disabled={page <= 1}
+            className="grid h-7 w-7 place-items-center rounded-md border border-border bg-white disabled:opacity-40"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </button>
+          <span className="px-1">{page} / {pageCount}</span>
+          <button
+            onClick={() => onPage(Math.min(pageCount, page + 1))}
+            disabled={page >= pageCount}
+            className="grid h-7 w-7 place-items-center rounded-md border border-border bg-white disabled:opacity-40"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type AuditEntry = {
+  id: string;
+  action: string;
+  target_type: string;
+  target_id: string;
+  target_label: string | null;
+  actor: string;
+  created_at: string;
+};
+
+function AuditTab({ password, onUnauthorized }: { password: string; onUnauthorized: () => void }) {
+  const [entries, setEntries] = useState<AuditEntry[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [type, setType] = useState("all");
+  const [action, setAction] = useState("all");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { entries } = await adminListAudit({ data: { password, limit: 1000 } });
+        setEntries(entries as AuditEntry[]);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Failed to load";
+        if (msg.includes("Unauthorized")) onUnauthorized();
+        else setErr(msg);
+      }
+    })();
+    // eslint-disable-next-line
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (!entries) return null;
+    const q = search.trim().toLowerCase();
+    return entries.filter((e) => {
+      if (q && !`${e.target_label ?? ""} ${e.actor}`.toLowerCase().includes(q)) return false;
+      if (type !== "all" && e.target_type !== type) return false;
+      if (action !== "all" && e.action !== action) return false;
+      return true;
+    });
+  }, [entries, search, type, action]);
+
+  useEffect(() => { setPage(1); }, [search, type, action, pageSize]);
+
+  const total = filtered?.length ?? 0;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const pageRows = filtered ? filtered.slice((page - 1) * pageSize, page * pageSize) : null;
+
+  return (
+    <Card>
+      <TableHeader title="Audit log" count={total} />
+      <div className="grid gap-2 border-b border-border bg-secondary/30 px-5 py-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="lg:col-span-2 relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search target or actor…"
+            className="w-full rounded-md border border-border bg-white pl-8 pr-2 py-1.5 text-xs outline-none focus:border-primary"
+          />
+        </div>
+        <FilterSelect value={type} onChange={setType} label="Target type">
+          <option value="all">All types</option>
+          <option value="donor">Donors</option>
+          <option value="request">Requests</option>
+        </FilterSelect>
+        <FilterSelect value={action} onChange={setAction} label="Action">
+          <option value="all">All actions</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="pending">Reset to pending</option>
+        </FilterSelect>
+      </div>
+      {err ? <div className="px-5 py-3 text-xs text-red-600">{err}</div> : null}
+      <TableScroll>
+        <table className="w-full text-sm">
+          <thead className="bg-secondary/60 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <tr>
+              <Th>When</Th><Th>Actor</Th><Th>Action</Th><Th>Type</Th><Th>Target</Th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {pageRows === null ? (
+              <tr><td colSpan={5} className="px-5 py-8 text-center text-sm text-muted-foreground"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>
+            ) : pageRows.length === 0 ? (
+              <tr><td colSpan={5} className="px-5 py-8 text-center text-sm text-muted-foreground">No audit entries yet.</td></tr>
+            ) : pageRows.map((e) => (
+              <tr key={e.id} className="hover:bg-secondary/40">
+                <Td className="text-muted-foreground whitespace-nowrap">{fmtDate(e.created_at)}</Td>
+                <Td className="font-medium text-foreground">{e.actor}</Td>
+                <Td><StatusBadge status={e.action} /></Td>
+                <Td className="capitalize">{e.target_type}</Td>
+                <Td>{e.target_label || <span className="text-muted-foreground">{e.target_id.slice(0, 8)}…</span>}</Td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TableScroll>
+      <Pagination page={page} pageCount={pageCount} pageSize={pageSize} total={total} onPage={setPage} onPageSize={setPageSize} />
+    </Card>
+  );
+}
