@@ -533,14 +533,15 @@ function DonorsTab({
               <SortTh label="Last donation" col="last_donation_date" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("last_donation_date")} />
               <SortTh label="Signed up" col="created_at" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("created_at")} />
               <SortTh label="Status" col="status" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("status")} />
+              {showDocument ? <Th>ID proof</Th> : null}
               <Th className="text-right">Actions</Th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {pageRows === null ? (
-              <tr><td colSpan={8} className="px-5 py-8 text-center text-sm text-muted-foreground"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>
+              <tr><td colSpan={showDocument ? 9 : 8} className="px-5 py-8 text-center text-sm text-muted-foreground"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>
             ) : pageRows.length === 0 ? (
-              <tr><td colSpan={8} className="px-5 py-8 text-center text-sm text-muted-foreground">No donors match these filters.</td></tr>
+              <tr><td colSpan={showDocument ? 9 : 8} className="px-5 py-8 text-center text-sm text-muted-foreground">No donors match these filters.</td></tr>
             ) : pageRows.map((d) => (
               <tr key={d.id} className="hover:bg-secondary/40">
                 <Td className="font-medium text-foreground">{d.full_name}</Td>
@@ -550,6 +551,11 @@ function DonorsTab({
                 <Td className="text-muted-foreground">{d.last_donation_date ? new Date(d.last_donation_date).toLocaleDateString("en-IN", { dateStyle: "medium" }) : "—"}</Td>
                 <Td className="text-muted-foreground">{fmtDate(d.created_at)}</Td>
                 <Td><StatusBadge status={d.status} /></Td>
+                {showDocument ? (
+                  <Td>
+                    <DocumentLink bucket="donor-id-proofs" path={d.id_proof_url ?? null} />
+                  </Td>
+                ) : null}
                 <Td className="text-right">
                   <div className="flex items-center justify-end gap-1.5">
                     <ActionButtons
