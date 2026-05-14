@@ -1576,6 +1576,80 @@ function Section({
   );
 }
 
+function ChatSubmissionsTab({
+  onChange, onUnauthorized,
+}: { onChange: () => void; onUnauthorized: () => void }) {
+  const [sub, setSub] = useState<"donors" | "requests">("donors");
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-card px-5 py-4 shadow-[var(--shadow-soft)]">
+        <div className="flex items-start gap-3">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
+            <Bot className="h-4 w-4" />
+          </span>
+          <div>
+            <h2 className="font-serif-display text-lg text-foreground">Chat submissions</h2>
+            <p className="text-xs text-muted-foreground">
+              Donor registrations and patient requests received through the in-app chatbot, separate from regular form submissions.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div className="inline-flex rounded-xl border border-border bg-white p-1 shadow-[var(--shadow-soft)]">
+        <TabButton active={sub === "donors"} onClick={() => setSub("donors")} icon={Users}>Donor signups</TabButton>
+        <TabButton active={sub === "requests"} onClick={() => setSub("requests")} icon={Inbox}>Patient requests</TabButton>
+      </div>
+      {sub === "donors" ? (
+        <DonorsTab source="chatbot" onChange={onChange} onUnauthorized={onUnauthorized} />
+      ) : (
+        <RequestsTab
+          source="chatbot"
+          onChange={onChange}
+          onOpen={() => { /* detail view not surfaced from chat tab */ }}
+          onUnauthorized={onUnauthorized}
+        />
+      )}
+    </div>
+  );
+}
+
+function DocumentLink({
+  bucket, path,
+}: { bucket: "donor-id-proofs" | "blood-requisitions"; path: string | null }) {
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  if (!path) {
+    return <span className="text-[11px] text-muted-foreground">—</span>;
+  }
+  async function open() {
+    setLoading(true);
+    setErr(null);
+    try {
+      const { url } = await adminGetSignedDocumentUrl({ data: { bucket, path: path! } });
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not open file");
+    } finally {
+      setLoading(false);
+    }
+  }
+  return (
+    <div className="flex flex-col gap-1">
+      <button
+        type="button"
+        onClick={open}
+        disabled={loading}
+        className="inline-flex items-center gap-1 rounded-md border border-border bg-white px-2 py-1 text-[11px] font-semibold text-foreground hover:bg-secondary disabled:opacity-50"
+      >
+        {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
+        View
+        <ExternalLink className="h-3 w-3" />
+      </button>
+      {err ? <span className="text-[10px] text-red-600">{err}</span> : null}
+    </div>
+  );
+}
+
 function ToggleRow({
   label, description, checked, onChange,
 }: { label: string; description?: string; checked: boolean; onChange: (v: boolean) => void }) {
