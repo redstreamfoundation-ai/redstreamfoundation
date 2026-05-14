@@ -2,6 +2,7 @@ import { Phone, Mail, MapPin, ShieldCheck, MapPinned, Users, LifeBuoy, Send } fr
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Logo } from "./Logo";
+import { supabase } from "@/integrations/supabase/client";
 
 export function Footer() {
   return (
@@ -175,15 +176,29 @@ function ContactForm() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const valid =
     name.trim().length > 0 &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) &&
     message.trim().length > 0;
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!valid) return;
+    if (!valid || submitting) return;
+    setSubmitting(true);
+    setError(null);
+    const { error: insertError } = await supabase.from("contact_messages").insert({
+      name: name.trim(),
+      email: email.trim(),
+      message: message.trim(),
+    });
+    setSubmitting(false);
+    if (insertError) {
+      setError("Couldn't send your message. Please try again or email us directly.");
+      return;
+    }
     const subject = encodeURIComponent(`Website contact — ${name.slice(0, 80)}`);
     const body = encodeURIComponent(
       `${message.slice(0, 1000)}\n\n— ${name.slice(0, 80)} <${email.slice(0, 120)}>`,
@@ -266,13 +281,16 @@ function ContactForm() {
             </p>
             <button
               type="submit"
-              disabled={!valid}
+              disabled={!valid || submitting}
               className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)] transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Send className="h-4 w-4" />
-              {sent ? "Email opened" : "Send message"}
+              {submitting ? "Sending…" : sent ? "Message sent" : "Send message"}
             </button>
           </div>
+          {error ? (
+            <p className="mt-2 text-right text-xs text-primary">{error}</p>
+          ) : null}
         </form>
       </div>
     </section>
