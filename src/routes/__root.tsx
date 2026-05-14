@@ -1,10 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { ReactNode } from "react";
 import {
-  HeadContent,
   Outlet,
   Link,
-  Scripts,
   createRootRouteWithContext,
   useRouter,
 } from "@tanstack/react-router";
@@ -38,7 +35,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
@@ -70,82 +66,14 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
-function RootDocument({ children }: { children: ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  );
-}
-
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Redstream Foundation — Emergency Blood Donors in Delhi" },
-      { name: "description", content: "Redstream Foundation connects patients in urgent need of blood with verified, nearby volunteer donors across Delhi. Fast, private, NGO-led." },
-      { name: "author", content: "Redstream Foundation" },
-      { property: "og:title", content: "Redstream Foundation — Emergency Blood Donors in Delhi" },
-      { property: "og:description", content: "Redstream Foundation connects patients in urgent need of blood with verified, nearby volunteer donors across Delhi. Fast, private, NGO-led." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Redstream" },
-      { name: "twitter:title", content: "Redstream Foundation — Emergency Blood Donors in Delhi" },
-      { name: "twitter:description", content: "Redstream Foundation connects patients in urgent need of blood with verified, nearby volunteer donors across Delhi. Fast, private, NGO-led." },
-      { property: "og:site_name", content: "Redstream Foundation" },
-    ],
-    links: [
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap",
-      },
-    ],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@graph": [
-            {
-              "@type": "NGO",
-              "@id": "https://redstreamfoundation.lovable.app/#org",
-              name: "Redstream Foundation",
-              url: "https://redstreamfoundation.lovable.app",
-              description:
-                "Delhi-based non-profit coordinating verified emergency blood donations across the NCR by matching patients with nearby volunteer donors.",
-              areaServed: "Delhi NCR, India",
-            },
-            {
-              "@type": "WebSite",
-              "@id": "https://redstreamfoundation.lovable.app/#website",
-              url: "https://redstreamfoundation.lovable.app",
-              name: "Redstream Foundation",
-              publisher: { "@id": "https://redstreamfoundation.lovable.app/#org" },
-              inLanguage: "en-IN",
-            },
-          ],
-        }),
-      },
-    ],
-  }),
   component: RootComponent,
-  shellComponent: RootDocument,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
