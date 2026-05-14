@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       blood_requests: {
         Row: {
+          admin_status: string
           attendant_name: string
           attendant_phone: string
           blood_group: string
@@ -33,6 +34,7 @@ export type Database = {
           urgency: Database["public"]["Enums"]["urgency_level"]
         }
         Insert: {
+          admin_status?: string
           attendant_name: string
           attendant_phone: string
           blood_group: string
@@ -50,6 +52,7 @@ export type Database = {
           urgency: Database["public"]["Enums"]["urgency_level"]
         }
         Update: {
+          admin_status?: string
           attendant_name?: string
           attendant_phone?: string
           blood_group?: string
@@ -194,6 +197,7 @@ export type Database = {
           pincode: string
           profession: string | null
           reliability_score: number
+          status: string
           total_donations: number
           updated_at: string
           user_id: string
@@ -210,6 +214,7 @@ export type Database = {
           pincode: string
           profession?: string | null
           reliability_score?: number
+          status?: string
           total_donations?: number
           updated_at?: string
           user_id: string
@@ -226,6 +231,7 @@ export type Database = {
           pincode?: string
           profession?: string | null
           reliability_score?: number
+          status?: string
           total_donations?: number
           updated_at?: string
           user_id?: string
