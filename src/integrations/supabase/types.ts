@@ -429,6 +429,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ensure_my_role: {
+        Args: { _intended: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
