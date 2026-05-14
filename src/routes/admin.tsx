@@ -22,6 +22,9 @@ import {
   ChevronLeft,
   ChevronRight,
   ScrollText,
+  Pencil,
+  Trash2,
+  X,
 } from "lucide-react";
 import {
   adminListDonors,
@@ -31,6 +34,8 @@ import {
   adminGetRequestDetail,
   adminGetStats,
   adminListAudit,
+  adminUpdateDonor,
+  adminDeleteDonor,
 } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
@@ -55,6 +60,7 @@ type Donor = {
   status: string;
   verified: boolean;
   created_at: string;
+  last_donation_date: string | null;
 };
 
 type RequestRow = {
@@ -361,6 +367,7 @@ function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnaut
   const [donors, setDonors] = useState<Donor[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Donor | null>(null);
 
   const [search, setSearch] = useState("");
   const [bg, setBg] = useState("all");
@@ -393,6 +400,20 @@ function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnaut
       onChange();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Update failed");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function deleteDonor(d: Donor) {
+    if (!window.confirm(`Delete donor "${d.full_name}"? This cannot be undone.`)) return;
+    setBusyId(d.id);
+    try {
+      await adminDeleteDonor({ data: { id: d.id } });
+      await load();
+      onChange();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Delete failed");
     } finally {
       setBusyId(null);
     }
@@ -435,6 +456,7 @@ function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnaut
   const pageRows = filtered ? filtered.slice((page - 1) * pageSize, page * pageSize) : null;
 
   return (
+    <>
     <Card>
       <TableHeader title="Donor signups" count={total} />
       <div className="grid gap-2 border-b border-border bg-secondary/30 px-5 py-3 sm:grid-cols-2 lg:grid-cols-6">
@@ -478,6 +500,7 @@ function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnaut
               <Th>Phone</Th>
               <SortTh label="Blood" col="blood_group" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("blood_group")} />
               <SortTh label="Location" col="locality" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("locality")} />
+              <SortTh label="Last donation" col="last_donation_date" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("last_donation_date")} />
               <SortTh label="Signed up" col="created_at" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("created_at")} />
               <SortTh label="Status" col="status" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("status")} />
               <Th className="text-right">Actions</Th>
@@ -485,24 +508,43 @@ function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnaut
           </thead>
           <tbody className="divide-y divide-border">
             {pageRows === null ? (
-              <tr><td colSpan={7} className="px-5 py-8 text-center text-sm text-muted-foreground"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>
+              <tr><td colSpan={8} className="px-5 py-8 text-center text-sm text-muted-foreground"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>
             ) : pageRows.length === 0 ? (
-              <tr><td colSpan={7} className="px-5 py-8 text-center text-sm text-muted-foreground">No donors match these filters.</td></tr>
+              <tr><td colSpan={8} className="px-5 py-8 text-center text-sm text-muted-foreground">No donors match these filters.</td></tr>
             ) : pageRows.map((d) => (
               <tr key={d.id} className="hover:bg-secondary/40">
                 <Td className="font-medium text-foreground">{d.full_name}</Td>
                 <Td>{d.phone}</Td>
                 <Td><span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-bold text-primary">{d.blood_group}</span></Td>
                 <Td>{[d.locality, d.pincode].filter(Boolean).join(", ")}</Td>
+                <Td className="text-muted-foreground">{d.last_donation_date ? new Date(d.last_donation_date).toLocaleDateString("en-IN", { dateStyle: "medium" }) : "—"}</Td>
                 <Td className="text-muted-foreground">{fmtDate(d.created_at)}</Td>
                 <Td><StatusBadge status={d.status} /></Td>
                 <Td className="text-right">
-                  <ActionButtons
-                    status={d.status}
-                    busy={busyId === d.id}
-                    onApprove={() => setDonorStatus(d.id, "approved")}
-                    onReject={() => setDonorStatus(d.id, "rejected")}
-                  />
+                  <div className="flex items-center justify-end gap-1.5">
+                    <ActionButtons
+                      status={d.status}
+                      busy={busyId === d.id}
+                      onApprove={() => setDonorStatus(d.id, "approved")}
+                      onReject={() => setDonorStatus(d.id, "rejected")}
+                    />
+                    <button
+                      onClick={() => setEditing(d)}
+                      disabled={busyId === d.id}
+                      title="Edit"
+                      className="inline-flex items-center gap-1 rounded-md border border-border bg-white px-2 py-1 text-[11px] font-semibold text-foreground hover:bg-secondary disabled:opacity-50"
+                    >
+                      <Pencil className="h-3 w-3" /> Edit
+                    </button>
+                    <button
+                      onClick={() => deleteDonor(d)}
+                      disabled={busyId === d.id}
+                      title="Delete"
+                      className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3 w-3" /> Delete
+                    </button>
+                  </div>
                 </Td>
               </tr>
             ))}
@@ -511,6 +553,117 @@ function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnaut
       </TableScroll>
       <Pagination page={page} pageCount={pageCount} pageSize={pageSize} total={total} onPage={setPage} onPageSize={setPageSize} />
     </Card>
+    {editing ? (
+      <DonorEditDrawer
+        donor={editing}
+        onClose={() => setEditing(null)}
+        onSaved={async () => { setEditing(null); await load(); onChange(); }}
+      />
+    ) : null}
+    </>
+  );
+}
+
+function DonorEditDrawer({
+  donor, onClose, onSaved,
+}: { donor: Donor; onClose: () => void; onSaved: () => void }) {
+  const [full_name, setFullName] = useState(donor.full_name);
+  const [phone, setPhone] = useState(donor.phone);
+  const [blood_group, setBloodGroup] = useState(donor.blood_group);
+  const [locality, setLocality] = useState(donor.locality);
+  const [pincode, setPincode] = useState(donor.pincode || "");
+  const [last_donation_date, setLastDonation] = useState(donor.last_donation_date ?? "");
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setErr(null);
+    try {
+      await adminUpdateDonor({
+        data: {
+          id: donor.id,
+          full_name: full_name.trim(),
+          phone: phone.trim(),
+          blood_group,
+          locality: locality.trim(),
+          pincode: pincode.trim(),
+          last_donation_date: last_donation_date || null,
+        },
+      });
+      onSaved();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      <button aria-label="Close" onClick={onClose} className="flex-1 bg-black/40" />
+      <form onSubmit={save} className="w-full max-w-md bg-white shadow-2xl flex flex-col h-full">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+          <div>
+            <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Edit donor</div>
+            <div className="font-serif-display text-lg text-foreground">{donor.full_name}</div>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-md p-1.5 text-muted-foreground hover:bg-secondary">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
+          <FieldInput label="Name" value={full_name} onChange={setFullName} required />
+          <FieldInput label="Phone" value={phone} onChange={setPhone} required />
+          <div>
+            <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground mb-1">Blood group</div>
+            <select
+              value={blood_group}
+              onChange={(e) => setBloodGroup(e.target.value)}
+              className="w-full rounded-md border border-border bg-white px-2.5 py-2 text-sm outline-none focus:border-primary"
+            >
+              {BLOOD_GROUPS.map((g) => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </div>
+          <FieldInput label="Locality" value={locality} onChange={setLocality} required />
+          <FieldInput label="Pincode" value={pincode} onChange={setPincode} />
+          <div>
+            <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground mb-1">Last donation date</div>
+            <input
+              type="date"
+              value={last_donation_date ?? ""}
+              onChange={(e) => setLastDonation(e.target.value)}
+              className="w-full rounded-md border border-border bg-white px-2.5 py-2 text-sm outline-none focus:border-primary"
+            />
+          </div>
+          {err ? <div className="text-xs text-red-600">{err}</div> : null}
+        </div>
+        <div className="border-t border-border px-5 py-3 flex items-center justify-end gap-2">
+          <button type="button" onClick={onClose} className="rounded-md border border-border bg-white px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary">Cancel</button>
+          <button type="submit" disabled={saving} className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50">
+            {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+            Save changes
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function FieldInput({
+  label, value, onChange, required,
+}: { label: string; value: string; onChange: (v: string) => void; required?: boolean }) {
+  return (
+    <div>
+      <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground mb-1">{label}</div>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        className="w-full rounded-md border border-border bg-white px-2.5 py-2 text-sm outline-none focus:border-primary"
+      />
+    </div>
   );
 }
 

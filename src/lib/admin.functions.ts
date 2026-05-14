@@ -24,7 +24,7 @@ export const adminListDonors = createServerFn({ method: "POST" })
     await assertAdminRole(context.userId);
     const { data: donors, error } = await supabaseAdmin
       .from("donors")
-      .select("id, full_name, phone, blood_group, locality, pincode, status, verified, created_at")
+      .select("id, full_name, phone, blood_group, locality, pincode, status, verified, created_at, last_donation_date")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return { donors: donors ?? [] };
@@ -56,6 +56,60 @@ export const adminUpdateDonorStatus = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     await supabaseAdmin.from("admin_audit_log").insert({
       action: data.status,
+      target_type: "donor",
+      target_id: data.id,
+      target_label: existing?.full_name ?? null,
+      actor: await actorEmail(context.userId),
+    });
+    return { ok: true };
+  });
+
+export const adminUpdateDonor = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: {
+    id: string;
+    full_name: string;
+    phone: string;
+    blood_group: string;
+    locality: string;
+    pincode?: string;
+    last_donation_date: string | null;
+  }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAdminRole(context.userId);
+    const { error } = await supabaseAdmin
+      .from("donors")
+      .update({
+        full_name: data.full_name,
+        phone: data.phone,
+        blood_group: data.blood_group,
+        locality: data.locality,
+        pincode: data.pincode ?? "",
+        last_donation_date: data.last_donation_date,
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("admin_audit_log").insert({
+      action: "edit",
+      target_type: "donor",
+      target_id: data.id,
+      target_label: data.full_name,
+      actor: await actorEmail(context.userId),
+    });
+    return { ok: true };
+  });
+
+export const adminDeleteDonor = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAdminRole(context.userId);
+    const { data: existing } = await supabaseAdmin
+      .from("donors").select("full_name").eq("id", data.id).single();
+    const { error } = await supabaseAdmin.from("donors").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("admin_audit_log").insert({
+      action: "delete",
       target_type: "donor",
       target_id: data.id,
       target_label: existing?.full_name ?? null,
