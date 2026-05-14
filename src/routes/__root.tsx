@@ -11,6 +11,7 @@ import {
 
 import { AuthProvider } from "@/lib/auth-context";
 import { ChatWidget } from "@/components/chat/ChatWidget";
+import "../styles.css";
 
 function NotFoundComponent() {
   return (
