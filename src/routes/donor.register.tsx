@@ -61,6 +61,19 @@ function DonorRegister() {
           profession: data.profession ?? "",
           lastDonation: data.last_donation_date ?? "",
         });
+      } else {
+        // First-time donor: prefill from saved profile (full_name, phone)
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("full_name, phone")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (prof) {
+          update({
+            fullName: prof.full_name || "",
+            phone: (prof.phone || "").replace(/\D/g, "").slice(-10),
+          });
+        }
       }
     })();
   }, [user, loading, navigate, update]);
