@@ -41,15 +41,16 @@ export function Hero() {
           <div className="flex w-full flex-col gap-3 pt-2 sm:flex-row md:w-auto md:justify-center">
             <Link
               to="/request"
-              className="group inline-flex items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground shadow-[var(--shadow-glow)] transition-all hover:bg-[var(--primary-deep)]"
+              className="group inline-flex items-center justify-center gap-2 rounded-full px-8 py-4 text-base font-semibold text-primary-foreground shadow-[var(--shadow-glow)] transition-all hover:scale-[1.02]"
+              style={{ backgroundImage: "var(--gradient-emergency)", backgroundColor: "var(--primary-deep)" }}
             >
-              <HeartPulse className="h-4 w-4" />
+              <HeartPulse className="h-5 w-5" />
               Request blood
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
               to="/donor"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-background px-6 py-3.5 text-sm font-medium text-foreground shadow-[var(--shadow-soft)] transition-colors hover:bg-secondary"
+              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-primary bg-transparent px-7 py-3.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/5"
             >
               Become a donor
             </Link>
