@@ -4,7 +4,6 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "predev": "node -e \"try{require('fs').rmSync('node_modules/.vite/deps',{recursive:true,force:true});console.log('[predev] cleared dep-optimizer cache')}catch(e){console.error('[predev] cache clear failed:',e.message)}\"",
     "dev": "vite dev",
     "build": "vite build",
     "build:dev": "vite build --mode development",
