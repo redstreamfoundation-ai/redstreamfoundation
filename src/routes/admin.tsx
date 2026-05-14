@@ -30,6 +30,9 @@ import {
   MessageSquare,
   Mail,
   Shield,
+  FileText,
+  Bot,
+  ExternalLink,
 } from "lucide-react";
 import {
   adminListDonors,
@@ -42,6 +45,8 @@ import {
   adminUpdateDonor,
   adminDeleteDonor,
   adminUpdateRequest,
+  adminDeleteRequest,
+  adminGetSignedDocumentUrl,
   adminGetSettings,
   adminUpdateSettings,
 } from "@/lib/admin.functions";
@@ -69,6 +74,8 @@ type Donor = {
   verified: boolean;
   created_at: string;
   last_donation_date: string | null;
+  id_proof_url?: string | null;
+  source?: string | null;
 };
 
 type RequestRow = {
@@ -85,6 +92,9 @@ type RequestRow = {
   status: string;
   admin_status: string;
   created_at: string;
+  patient_name?: string | null;
+  requisition_url?: string | null;
+  source?: string | null;
 };
 
 type Stats = {
