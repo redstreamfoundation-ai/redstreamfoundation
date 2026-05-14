@@ -367,6 +367,7 @@ function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnaut
   const [donors, setDonors] = useState<Donor[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Donor | null>(null);
 
   const [search, setSearch] = useState("");
   const [bg, setBg] = useState("all");
@@ -399,6 +400,20 @@ function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnaut
       onChange();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Update failed");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function deleteDonor(d: Donor) {
+    if (!window.confirm(`Delete donor "${d.full_name}"? This cannot be undone.`)) return;
+    setBusyId(d.id);
+    try {
+      await adminDeleteDonor({ data: { id: d.id } });
+      await load();
+      onChange();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Delete failed");
     } finally {
       setBusyId(null);
     }
