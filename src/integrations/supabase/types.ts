@@ -44,6 +44,57 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          auto_expand: boolean
+          default_radius_km: number
+          hide_exact_location: boolean
+          id: string
+          mask_contacts: boolean
+          max_radius_km: number
+          notify_email_digest: boolean
+          notify_push: boolean
+          notify_sms: boolean
+          notify_whatsapp: boolean
+          requisition_retention_days: number
+          singleton: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          auto_expand?: boolean
+          default_radius_km?: number
+          hide_exact_location?: boolean
+          id?: string
+          mask_contacts?: boolean
+          max_radius_km?: number
+          notify_email_digest?: boolean
+          notify_push?: boolean
+          notify_sms?: boolean
+          notify_whatsapp?: boolean
+          requisition_retention_days?: number
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          auto_expand?: boolean
+          default_radius_km?: number
+          hide_exact_location?: boolean
+          id?: string
+          mask_contacts?: boolean
+          max_radius_km?: number
+          notify_email_digest?: boolean
+          notify_push?: boolean
+          notify_sms?: boolean
+          notify_whatsapp?: boolean
+          requisition_retention_days?: number
+          singleton?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       blood_requests: {
         Row: {
           admin_status: string
