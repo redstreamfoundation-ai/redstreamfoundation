@@ -173,7 +173,13 @@ function LoginScreen() {
 
 function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [tab, setTab] = useState<"donors" | "requests" | "audit">("donors");
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [stats, setStats] = useState<Stats>({
+    totalDonors: 0,
+    pendingDonors: 0,
+    approvedDonors: 0,
+    totalRequests: 0,
+    pendingRequests: 0,
+  });
   const [statsErr, setStatsErr] = useState<string | null>(null);
   const [openRequest, setOpenRequest] = useState<string | null>(null);
 
@@ -215,10 +221,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       <main className="mx-auto max-w-6xl px-5 py-7">
         {/* Stats */}
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 mb-6">
-          <StatCard label="Total donors" value={stats?.totalDonors} icon={Users} />
-          <StatCard label="Pending approvals" value={stats?.pendingDonors} icon={Clock} tone="amber" />
-          <StatCard label="Verified donors" value={stats?.approvedDonors} icon={ShieldCheck} tone="emerald" />
-          <StatCard label="Total requests" value={stats?.totalRequests} icon={HeartPulse} tone="primary" />
+          <StatCard label="Total donors" value={stats.totalDonors} icon={Users} />
+          <StatCard label="Pending approvals" value={stats.pendingDonors} icon={Clock} tone="amber" />
+          <StatCard label="Verified donors" value={stats.approvedDonors} icon={ShieldCheck} tone="emerald" />
+          <StatCard label="Total requests" value={stats.totalRequests} icon={HeartPulse} tone="primary" />
         </div>
         {statsErr ? <p className="mb-4 text-xs text-red-600">{statsErr}</p> : null}
 
@@ -255,7 +261,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
 function StatCard({
   label, value, icon: Icon, tone = "neutral",
-}: { label: string; value?: number; icon: React.ComponentType<{ className?: string }>; tone?: "primary" | "amber" | "emerald" | "neutral" }) {
+}: { label: string; value: number; icon: React.ComponentType<{ className?: string }>; tone?: "primary" | "amber" | "emerald" | "neutral" }) {
   const map = {
     primary: "bg-primary/10 text-primary",
     amber: "bg-amber-500/10 text-amber-600",
@@ -268,7 +274,7 @@ function StatCard({
         <div>
           <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">{label}</div>
           <div className="mt-2 font-serif-display text-3xl text-foreground">
-            {value === undefined ? <span className="text-muted-foreground">—</span> : value}
+            {value}
           </div>
         </div>
         <span className={`grid h-9 w-9 place-items-center rounded-xl ${map[tone]}`}>
