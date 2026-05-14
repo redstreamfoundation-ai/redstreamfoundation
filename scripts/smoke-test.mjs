@@ -19,23 +19,49 @@ const baseUrl = (
   "https://redstreamfoundation.org"
 ).replace(/\/$/, "");
 
-// Routes to probe. Acceptable statuses are 2xx and common redirects.
-// 404, 5xx, or network failure = test failure.
-const routes = ["/", "/admin", "/donor", "/request"];
-const ACCEPTABLE = new Set([200, 301, 302, 304, 307, 308]);
+// Routes to probe. The script follows redirects and then validates that:
+//   1. final status is 200, and
+//   2. the final URL path matches one of the allowed paths for that route.
+//
+// `/` is allowed to land on `/` (Coming Soon on the live domain) or `/home`
+// (preview / non-live domains where it auto-redirects). Every other route
+// must resolve to itself.
+const routes = [
+  { path: "/", allowedFinalPaths: ["/", "/home"] },
+  { path: "/admin", allowedFinalPaths: ["/admin"] },
+  { path: "/donor", allowedFinalPaths: ["/donor"] },
+  { path: "/request", allowedFinalPaths: ["/request"] },
+];
 
-async function check(path) {
+async function check({ path, allowedFinalPaths }) {
   const url = `${baseUrl}${path}`;
   try {
     const res = await fetch(url, {
       method: "GET",
-      redirect: "manual",
+      redirect: "follow",
       headers: { "user-agent": "redstream-smoke-test/1.0" },
     });
-    const ok = ACCEPTABLE.has(res.status);
-    return { path, url, status: res.status, ok };
+    const finalUrl = new URL(res.url);
+    const finalPath = finalUrl.pathname.replace(/\/$/, "") || "/";
+    const statusOk = res.status === 200;
+    const pathOk = allowedFinalPaths
+      .map((p) => p.replace(/\/$/, "") || "/")
+      .includes(finalPath);
+    return {
+      path,
+      url,
+      status: res.status,
+      finalUrl: res.url,
+      finalPath,
+      ok: statusOk && pathOk,
+      reason: !statusOk
+        ? `status ${res.status} (expected 200)`
+        : !pathOk
+          ? `landed on ${finalPath} (expected one of ${allowedFinalPaths.join(", ")})`
+          : "",
+    };
   } catch (err) {
-    return { path, url, status: 0, ok: false, error: err.message };
+    return { path, url, status: 0, ok: false, reason: err.message };
   }
 }
 
@@ -44,8 +70,10 @@ const results = await Promise.all(routes.map(check));
 let failed = 0;
 for (const r of results) {
   const tag = r.ok ? "OK  " : "FAIL";
-  const extra = r.error ? ` (${r.error})` : "";
-  console.log(`[${tag}] ${r.status}  ${r.url}${extra}`);
+  const extra = r.ok ? "" : ` — ${r.reason}`;
+  console.log(
+    `[${tag}] ${r.status}  ${r.url} -> ${r.finalUrl ?? "(no response)"}${extra}`,
+  );
   if (!r.ok) failed++;
 }
 
