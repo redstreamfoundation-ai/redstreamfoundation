@@ -95,7 +95,7 @@ function AdminPage() {
     }} />;
   }
 
-  return <Dashboard password={password} onLogout={() => {
+  return <Dashboard onLogout={() => {
     sessionStorage.removeItem(PW_KEY);
     setPassword(null);
   }} />;
@@ -164,7 +164,7 @@ function Dashboard({ password, onLogout }: { password: string; onLogout: () => v
 
   async function loadStats() {
     try {
-      const s = await adminGetStats({ data: { password } });
+      const s = await adminGetStats({});
       setStats(s);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to load stats";
@@ -215,19 +215,19 @@ function Dashboard({ password, onLogout }: { password: string; onLogout: () => v
         </div>
 
         {tab === "donors" ? (
-          <DonorsTab password={password} onChange={loadStats} onUnauthorized={onLogout} />
+          <DonorsTab onChange={loadStats} onUnauthorized={onLogout} />
         ) : tab === "audit" ? (
-          <AuditTab password={password} onUnauthorized={onLogout} />
+          <AuditTab onUnauthorized={onLogout} />
         ) : openRequest ? (
           <RequestDetail
-            password={password}
+            
             id={openRequest}
             onBack={() => setOpenRequest(null)}
             onUnauthorized={onLogout}
           />
         ) : (
           <RequestsTab
-            password={password}
+            
             onChange={loadStats}
             onOpen={(id) => setOpenRequest(id)}
             onUnauthorized={onLogout}
@@ -336,7 +336,7 @@ const PAGE_SIZES = [10, 25, 50, 100];
 
 type SortDir = "asc" | "desc";
 
-function DonorsTab({ password, onChange, onUnauthorized }: { password: string; onChange: () => void; onUnauthorized: () => void }) {
+function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnauthorized: () => void }) {
   const [donors, setDonors] = useState<Donor[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -354,7 +354,7 @@ function DonorsTab({ password, onChange, onUnauthorized }: { password: string; o
 
   async function load() {
     try {
-      const { donors } = await adminListDonors({ data: { password } });
+      const { donors } = await adminListDonors({});
       setDonors(donors as Donor[]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to load";
@@ -367,7 +367,7 @@ function DonorsTab({ password, onChange, onUnauthorized }: { password: string; o
   async function setDonorStatus(id: string, next: "approved" | "rejected") {
     setBusyId(id);
     try {
-      await adminUpdateDonorStatus({ data: { password, id, status: next } });
+      await adminUpdateDonorStatus({ data: { id, status: next } });
       await load();
       onChange();
     } catch (e) {
@@ -494,8 +494,8 @@ function DonorsTab({ password, onChange, onUnauthorized }: { password: string; o
 }
 
 function RequestsTab({
-  password, onChange, onOpen, onUnauthorized,
-}: { password: string; onChange: () => void; onOpen: (id: string) => void; onUnauthorized: () => void }) {
+  onChange, onOpen, onUnauthorized,
+}: { onChange: () => void; onOpen: (id: string) => void; onUnauthorized: () => void }) {
   const [rows, setRows] = useState<RequestRow[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -511,7 +511,7 @@ function RequestsTab({
 
   async function load() {
     try {
-      const { requests } = await adminListRequests({ data: { password } });
+      const { requests } = await adminListRequests({});
       setRows(requests as RequestRow[]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to load";
@@ -524,7 +524,7 @@ function RequestsTab({
   async function setReqStatus(id: string, next: "approved" | "rejected") {
     setBusyId(id);
     try {
-      await adminUpdateRequestStatus({ data: { password, id, status: next } });
+      await adminUpdateRequestStatus({ data: { id, status: next } });
       await load();
       onChange();
     } catch (e) {
@@ -657,15 +657,15 @@ type RequestDetailData = {
 };
 
 function RequestDetail({
-  password, id, onBack, onUnauthorized,
-}: { password: string; id: string; onBack: () => void; onUnauthorized: () => void }) {
+  id, onBack, onUnauthorized,
+}: { id: string; onBack: () => void; onUnauthorized: () => void }) {
   const [data, setData] = useState<RequestDetailData | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const res = await adminGetRequestDetail({ data: { password, id } });
+        const res = await adminGetRequestDetail({ data: { id } });
         setData(res as RequestDetailData);
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Failed to load";
@@ -860,7 +860,7 @@ type AuditEntry = {
   created_at: string;
 };
 
-function AuditTab({ password, onUnauthorized }: { password: string; onUnauthorized: () => void }) {
+function AuditTab({ onUnauthorized }: { onUnauthorized: () => void }) {
   const [entries, setEntries] = useState<AuditEntry[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -872,7 +872,7 @@ function AuditTab({ password, onUnauthorized }: { password: string; onUnauthoriz
   useEffect(() => {
     (async () => {
       try {
-        const { entries } = await adminListAudit({ data: { password, limit: 1000 } });
+        const { entries } = await adminListAudit({ data: { limit: 1000 } });
         setEntries(entries as AuditEntry[]);
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Failed to load";
