@@ -268,10 +268,13 @@ export type Database = {
       }
       donors: {
         Row: {
+          age: number | null
+          availability: string | null
           blood_group: string
           created_at: string
           full_name: string
           id: string
+          id_proof_url: string | null
           last_donation_date: string | null
           locality: string
           phone: string
@@ -285,10 +288,13 @@ export type Database = {
           verified: boolean
         }
         Insert: {
+          age?: number | null
+          availability?: string | null
           blood_group: string
           created_at?: string
           full_name: string
           id?: string
+          id_proof_url?: string | null
           last_donation_date?: string | null
           locality: string
           phone: string
@@ -302,10 +308,13 @@ export type Database = {
           verified?: boolean
         }
         Update: {
+          age?: number | null
+          availability?: string | null
           blood_group?: string
           created_at?: string
           full_name?: string
           id?: string
+          id_proof_url?: string | null
           last_donation_date?: string | null
           locality?: string
           phone?: string
