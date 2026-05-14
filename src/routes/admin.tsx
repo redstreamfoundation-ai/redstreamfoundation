@@ -736,7 +736,15 @@ function RequestsTab({
   async function setReqStatus(id: string, next: "approved" | "rejected" | "fulfilled" | "pending") {
     setBusyId(id);
     try {
-      await adminUpdateRequestStatus({ data: { id, status: next } });
+      if (next === "fulfilled") {
+        const { error } = await supabase
+          .from("blood_requests")
+          .update({ admin_status: "fulfilled", status: "fulfilled" })
+          .eq("id", id);
+        if (error) throw new Error(error.message);
+      } else {
+        await adminUpdateRequestStatus({ data: { id, status: next } });
+      }
       await load();
       onChange();
     } catch (e) {
