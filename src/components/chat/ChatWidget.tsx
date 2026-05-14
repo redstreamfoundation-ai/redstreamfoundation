@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { MessageCircle, X, Send, Loader2, Paperclip } from "lucide-react";
-import { useServerFn } from "@tanstack/react-start";
 import { chatbotReply } from "@/lib/chatbot.functions";
 import { registerDonorFromChat } from "@/lib/donor-registration.functions";
 import { submitBloodRequestFromChat } from "@/lib/blood-request.functions";
@@ -261,9 +260,9 @@ export function ChatWidget() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const sendChat = useServerFn(chatbotReply);
-  const submitDonor = useServerFn(registerDonorFromChat);
-  const submitRequest = useServerFn(submitBloodRequestFromChat);
+  const sendChat = chatbotReply;
+  const submitDonor = registerDonorFromChat;
+  const submitRequest = submitBloodRequestFromChat;
 
   useEffect(() => {
     if (scrollRef.current) {
