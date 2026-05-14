@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RequestRouteImport } from './routes/request'
+import { Route as HomeRouteImport } from './routes/home'
 import { Route as DonorRouteImport } from './routes/donor'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -40,6 +41,11 @@ import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 const RequestRoute = RequestRouteImport.update({
   id: '/request',
   path: '/request',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HomeRoute = HomeRouteImport.update({
+  id: '/home',
+  path: '/home',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DonorRoute = DonorRouteImport.update({
@@ -178,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/donor': typeof DonorRouteWithChildren
+  '/home': typeof HomeRoute
   '/request': typeof RequestRouteWithChildren
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/donors': typeof AdminDonorsRoute
@@ -205,6 +212,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/home': typeof HomeRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/donors': typeof AdminDonorsRoute
   '/admin/matching': typeof AdminMatchingRoute
@@ -234,6 +242,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/donor': typeof DonorRouteWithChildren
+  '/home': typeof HomeRoute
   '/request': typeof RequestRouteWithChildren
   '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/donors': typeof AdminDonorsRoute
@@ -265,6 +274,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/donor'
+    | '/home'
     | '/request'
     | '/admin/analytics'
     | '/admin/donors'
@@ -292,6 +302,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/home'
     | '/admin/analytics'
     | '/admin/donors'
     | '/admin/matching'
@@ -320,6 +331,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/auth'
     | '/donor'
+    | '/home'
     | '/request'
     | '/admin/analytics'
     | '/admin/donors'
@@ -350,6 +362,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
   DonorRoute: typeof DonorRouteWithChildren
+  HomeRoute: typeof HomeRoute
   RequestRoute: typeof RequestRouteWithChildren
 }
 
@@ -360,6 +373,13 @@ declare module '@tanstack/react-router' {
       path: '/request'
       fullPath: '/request'
       preLoaderRoute: typeof RequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/home': {
+      id: '/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof HomeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/donor': {
@@ -621,6 +641,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
   DonorRoute: DonorRouteWithChildren,
+  HomeRoute: HomeRoute,
   RequestRoute: RequestRouteWithChildren,
 }
 export const routeTree = rootRouteImport
