@@ -171,7 +171,7 @@ function LoginScreen() {
   );
 }
 
-function Dashboard({ password, onLogout }: { password: string; onLogout: () => void }) {
+function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [tab, setTab] = useState<"donors" | "requests" | "audit">("donors");
   const [stats, setStats] = useState<Stats | null>(null);
   const [statsErr, setStatsErr] = useState<string | null>(null);
