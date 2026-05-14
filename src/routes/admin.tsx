@@ -313,6 +313,7 @@ function StatusBadge({ status }: { status: string }) {
     pending: "bg-amber-500/10 text-amber-700 border-amber-500/20",
     approved: "bg-emerald-500/10 text-emerald-700 border-emerald-500/20",
     rejected: "bg-red-500/10 text-red-700 border-red-500/20",
+    fulfilled: "bg-sky-500/10 text-sky-700 border-sky-500/20",
   };
   return (
     <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${map[status] || "bg-secondary text-muted-foreground border-border"}`}>
