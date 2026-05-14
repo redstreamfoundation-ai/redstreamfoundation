@@ -1,5 +1,6 @@
-import { Phone, Mail, MapPin, ShieldCheck, MapPinned, Users, LifeBuoy } from "lucide-react";
+import { Phone, Mail, MapPin, ShieldCheck, MapPinned, Users, LifeBuoy, Send } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { Logo } from "./Logo";
 
 export function Footer() {
@@ -50,13 +51,15 @@ export function Footer() {
             <FooterCol title="Foundation">
               <li><a href="#mission" className="hover:text-primary">Our mission</a></li>
               <li><a href="#trust" className="hover:text-primary">Trust & safety</a></li>
-              <li><a href="#" className="hover:text-primary">Privacy policy</a></li>
+              <li><Link to="/privacy" className="hover:text-primary">Privacy policy</Link></li>
               <li><a href="#" className="hover:text-primary">Terms of use</a></li>
             </FooterCol>
             <ContactCol />
             <HelplineCol />
           </nav>
         </div>
+
+        <ContactForm />
 
         <div className="mt-12 rounded-2xl border border-border bg-background/60 p-4 text-xs leading-relaxed text-muted-foreground">
           Redstream Foundation coordinates emergency donor connections through
