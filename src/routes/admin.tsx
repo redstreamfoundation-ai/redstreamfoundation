@@ -24,7 +24,6 @@ import {
   ScrollText,
 } from "lucide-react";
 import {
-  adminLogin,
   adminListDonors,
   adminListRequests,
   adminUpdateDonorStatus,
@@ -33,6 +32,8 @@ import {
   adminGetStats,
   adminListAudit,
 } from "@/lib/admin.functions";
+import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -43,8 +44,6 @@ export const Route = createFileRoute("/admin")({
     ],
   }),
 });
-
-const PW_KEY = "redstream_admin_pw";
 
 type Donor = {
   id: string;
@@ -83,25 +82,37 @@ type Stats = {
 };
 
 function AdminPage() {
-  const [password, setPassword] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    return sessionStorage.getItem(PW_KEY);
-  });
+  const [session, setSession] = useState<Session | null>(null);
+  const [ready, setReady] = useState(false);
 
-  if (!password) {
-    return <LoginScreen onSuccess={(pw) => {
-      sessionStorage.setItem(PW_KEY, pw);
-      setPassword(pw);
-    }} />;
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      setSession(s);
+    });
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setReady(true);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen bg-[oklch(0.16_0.025_25)] grid place-items-center">
+        <Loader2 className="h-6 w-6 animate-spin text-white/50" />
+      </div>
+    );
   }
 
-  return <Dashboard onLogout={() => {
-    sessionStorage.removeItem(PW_KEY);
-    setPassword(null);
-  }} />;
+  if (!session) {
+    return <LoginScreen />;
+  }
+
+  return <Dashboard onLogout={async () => { await supabase.auth.signOut(); }} />;
 }
 
-function LoginScreen({ onSuccess }: { onSuccess: (pw: string) => void }) {
+function LoginScreen() {
+  const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -110,14 +121,9 @@ function LoginScreen({ onSuccess }: { onSuccess: (pw: string) => void }) {
     e.preventDefault();
     setLoading(true);
     setErr(null);
-    try {
-      await adminLogin({ data: { password: pw } });
-      onSuccess(pw);
-    } catch {
-      setErr("Incorrect password.");
-    } finally {
-      setLoading(false);
-    }
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
+    if (error) setErr(error.message);
+    setLoading(false);
   }
 
   return (
@@ -133,19 +139,28 @@ function LoginScreen({ onSuccess }: { onSuccess: (pw: string) => void }) {
           </div>
         </div>
         <h1 className="text-xl font-semibold mb-1">Admin access</h1>
-        <p className="text-sm text-white/60 mb-5">Enter the operations password to continue.</p>
+        <p className="text-sm text-white/60 mb-5">Sign in with your operations email.</p>
+        <input
+          type="email"
+          autoFocus
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          required
+          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm outline-none placeholder:text-white/30 focus:border-primary focus:ring-2 focus:ring-primary/20 mb-3"
+        />
         <input
           type="password"
-          autoFocus
           value={pw}
           onChange={(e) => setPw(e.target.value)}
           placeholder="Password"
+          required
           className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm outline-none placeholder:text-white/30 focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
         {err ? <div className="mt-3 text-xs text-red-400">{err}</div> : null}
         <button
           type="submit"
-          disabled={loading || !pw}
+          disabled={loading || !pw || !email}
           className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)] disabled:opacity-50"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
