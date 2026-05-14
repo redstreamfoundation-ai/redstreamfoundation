@@ -24,7 +24,6 @@ import {
   ScrollText,
 } from "lucide-react";
 import {
-  adminLogin,
   adminListDonors,
   adminListRequests,
   adminUpdateDonorStatus,
@@ -33,6 +32,8 @@ import {
   adminGetStats,
   adminListAudit,
 } from "@/lib/admin.functions";
+import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -43,8 +44,6 @@ export const Route = createFileRoute("/admin")({
     ],
   }),
 });
-
-const PW_KEY = "redstream_admin_pw";
 
 type Donor = {
   id: string;
@@ -83,25 +82,37 @@ type Stats = {
 };
 
 function AdminPage() {
-  const [password, setPassword] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    return sessionStorage.getItem(PW_KEY);
-  });
+  const [session, setSession] = useState<Session | null>(null);
+  const [ready, setReady] = useState(false);
 
-  if (!password) {
-    return <LoginScreen onSuccess={(pw) => {
-      sessionStorage.setItem(PW_KEY, pw);
-      setPassword(pw);
-    }} />;
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      setSession(s);
+    });
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setReady(true);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen bg-[oklch(0.16_0.025_25)] grid place-items-center">
+        <Loader2 className="h-6 w-6 animate-spin text-white/50" />
+      </div>
+    );
   }
 
-  return <Dashboard password={password} onLogout={() => {
-    sessionStorage.removeItem(PW_KEY);
-    setPassword(null);
-  }} />;
+  if (!session) {
+    return <LoginScreen />;
+  }
+
+  return <Dashboard onLogout={async () => { await supabase.auth.signOut(); }} />;
 }
 
-function LoginScreen({ onSuccess }: { onSuccess: (pw: string) => void }) {
+function LoginScreen() {
+  const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -110,14 +121,9 @@ function LoginScreen({ onSuccess }: { onSuccess: (pw: string) => void }) {
     e.preventDefault();
     setLoading(true);
     setErr(null);
-    try {
-      await adminLogin({ data: { password: pw } });
-      onSuccess(pw);
-    } catch {
-      setErr("Incorrect password.");
-    } finally {
-      setLoading(false);
-    }
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
+    if (error) setErr(error.message);
+    setLoading(false);
   }
 
   return (
@@ -133,19 +139,28 @@ function LoginScreen({ onSuccess }: { onSuccess: (pw: string) => void }) {
           </div>
         </div>
         <h1 className="text-xl font-semibold mb-1">Admin access</h1>
-        <p className="text-sm text-white/60 mb-5">Enter the operations password to continue.</p>
+        <p className="text-sm text-white/60 mb-5">Sign in with your operations email.</p>
+        <input
+          type="email"
+          autoFocus
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          required
+          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm outline-none placeholder:text-white/30 focus:border-primary focus:ring-2 focus:ring-primary/20 mb-3"
+        />
         <input
           type="password"
-          autoFocus
           value={pw}
           onChange={(e) => setPw(e.target.value)}
           placeholder="Password"
+          required
           className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm outline-none placeholder:text-white/30 focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
         {err ? <div className="mt-3 text-xs text-red-400">{err}</div> : null}
         <button
           type="submit"
-          disabled={loading || !pw}
+          disabled={loading || !pw || !email}
           className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)] disabled:opacity-50"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
@@ -156,7 +171,7 @@ function LoginScreen({ onSuccess }: { onSuccess: (pw: string) => void }) {
   );
 }
 
-function Dashboard({ password, onLogout }: { password: string; onLogout: () => void }) {
+function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [tab, setTab] = useState<"donors" | "requests" | "audit">("donors");
   const [stats, setStats] = useState<Stats | null>(null);
   const [statsErr, setStatsErr] = useState<string | null>(null);
@@ -164,7 +179,7 @@ function Dashboard({ password, onLogout }: { password: string; onLogout: () => v
 
   async function loadStats() {
     try {
-      const s = await adminGetStats({ data: { password } });
+      const s = await adminGetStats({});
       setStats(s);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to load stats";
@@ -215,19 +230,19 @@ function Dashboard({ password, onLogout }: { password: string; onLogout: () => v
         </div>
 
         {tab === "donors" ? (
-          <DonorsTab password={password} onChange={loadStats} onUnauthorized={onLogout} />
+          <DonorsTab onChange={loadStats} onUnauthorized={onLogout} />
         ) : tab === "audit" ? (
-          <AuditTab password={password} onUnauthorized={onLogout} />
+          <AuditTab onUnauthorized={onLogout} />
         ) : openRequest ? (
           <RequestDetail
-            password={password}
+            
             id={openRequest}
             onBack={() => setOpenRequest(null)}
             onUnauthorized={onLogout}
           />
         ) : (
           <RequestsTab
-            password={password}
+            
             onChange={loadStats}
             onOpen={(id) => setOpenRequest(id)}
             onUnauthorized={onLogout}
@@ -336,7 +351,7 @@ const PAGE_SIZES = [10, 25, 50, 100];
 
 type SortDir = "asc" | "desc";
 
-function DonorsTab({ password, onChange, onUnauthorized }: { password: string; onChange: () => void; onUnauthorized: () => void }) {
+function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnauthorized: () => void }) {
   const [donors, setDonors] = useState<Donor[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -354,7 +369,7 @@ function DonorsTab({ password, onChange, onUnauthorized }: { password: string; o
 
   async function load() {
     try {
-      const { donors } = await adminListDonors({ data: { password } });
+      const { donors } = await adminListDonors({});
       setDonors(donors as Donor[]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to load";
@@ -367,7 +382,7 @@ function DonorsTab({ password, onChange, onUnauthorized }: { password: string; o
   async function setDonorStatus(id: string, next: "approved" | "rejected") {
     setBusyId(id);
     try {
-      await adminUpdateDonorStatus({ data: { password, id, status: next } });
+      await adminUpdateDonorStatus({ data: { id, status: next } });
       await load();
       onChange();
     } catch (e) {
@@ -494,8 +509,8 @@ function DonorsTab({ password, onChange, onUnauthorized }: { password: string; o
 }
 
 function RequestsTab({
-  password, onChange, onOpen, onUnauthorized,
-}: { password: string; onChange: () => void; onOpen: (id: string) => void; onUnauthorized: () => void }) {
+  onChange, onOpen, onUnauthorized,
+}: { onChange: () => void; onOpen: (id: string) => void; onUnauthorized: () => void }) {
   const [rows, setRows] = useState<RequestRow[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -511,7 +526,7 @@ function RequestsTab({
 
   async function load() {
     try {
-      const { requests } = await adminListRequests({ data: { password } });
+      const { requests } = await adminListRequests({});
       setRows(requests as RequestRow[]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to load";
@@ -524,7 +539,7 @@ function RequestsTab({
   async function setReqStatus(id: string, next: "approved" | "rejected") {
     setBusyId(id);
     try {
-      await adminUpdateRequestStatus({ data: { password, id, status: next } });
+      await adminUpdateRequestStatus({ data: { id, status: next } });
       await load();
       onChange();
     } catch (e) {
@@ -657,15 +672,15 @@ type RequestDetailData = {
 };
 
 function RequestDetail({
-  password, id, onBack, onUnauthorized,
-}: { password: string; id: string; onBack: () => void; onUnauthorized: () => void }) {
+  id, onBack, onUnauthorized,
+}: { id: string; onBack: () => void; onUnauthorized: () => void }) {
   const [data, setData] = useState<RequestDetailData | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const res = await adminGetRequestDetail({ data: { password, id } });
+        const res = await adminGetRequestDetail({ data: { id } });
         setData(res as RequestDetailData);
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Failed to load";
@@ -860,7 +875,7 @@ type AuditEntry = {
   created_at: string;
 };
 
-function AuditTab({ password, onUnauthorized }: { password: string; onUnauthorized: () => void }) {
+function AuditTab({ onUnauthorized }: { onUnauthorized: () => void }) {
   const [entries, setEntries] = useState<AuditEntry[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -872,7 +887,7 @@ function AuditTab({ password, onUnauthorized }: { password: string; onUnauthoriz
   useEffect(() => {
     (async () => {
       try {
-        const { entries } = await adminListAudit({ data: { password, limit: 1000 } });
+        const { entries } = await adminListAudit({ data: { limit: 1000 } });
         setEntries(entries as AuditEntry[]);
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Failed to load";
