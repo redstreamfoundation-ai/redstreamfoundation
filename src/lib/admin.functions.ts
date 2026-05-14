@@ -1,25 +1,27 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const ADMIN_PASSWORD = "redstream2026";
-
-function assertAdmin(password: unknown) {
-  if (typeof password !== "string" || password !== ADMIN_PASSWORD) {
-    throw new Error("Unauthorized");
-  }
+async function assertAdminRole(userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Forbidden: admin role required");
 }
 
-export const adminLogin = createServerFn({ method: "POST" })
-  .inputValidator((d: { password: string }) => d)
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
-    return { ok: true };
-  });
+async function actorEmail(userId: string): Promise<string> {
+  const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
+  return data?.user?.email ?? userId;
+}
 
 export const adminListDonors = createServerFn({ method: "POST" })
-  .inputValidator((d: { password: string }) => d)
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdminRole(context.userId);
     const { data: donors, error } = await supabaseAdmin
       .from("donors")
       .select("id, full_name, phone, blood_group, locality, pincode, status, verified, created_at")
@@ -29,9 +31,9 @@ export const adminListDonors = createServerFn({ method: "POST" })
   });
 
 export const adminListRequests = createServerFn({ method: "POST" })
-  .inputValidator((d: { password: string }) => d)
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdminRole(context.userId);
     const { data: requests, error } = await supabaseAdmin
       .from("blood_requests")
       .select("id, attendant_name, attendant_phone, blood_group, hospital, locality, units, urgency, component, patient_age, status, admin_status, created_at")
@@ -41,14 +43,12 @@ export const adminListRequests = createServerFn({ method: "POST" })
   });
 
 export const adminUpdateDonorStatus = createServerFn({ method: "POST" })
-  .inputValidator((d: { password: string; id: string; status: "approved" | "rejected" | "pending" }) => d)
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string; status: "approved" | "rejected" | "pending" }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAdminRole(context.userId);
     const { data: existing } = await supabaseAdmin
-      .from("donors")
-      .select("full_name")
-      .eq("id", data.id)
-      .single();
+      .from("donors").select("full_name").eq("id", data.id).single();
     const { error } = await supabaseAdmin
       .from("donors")
       .update({ status: data.status, verified: data.status === "approved" })
@@ -59,20 +59,20 @@ export const adminUpdateDonorStatus = createServerFn({ method: "POST" })
       target_type: "donor",
       target_id: data.id,
       target_label: existing?.full_name ?? null,
-      actor: "admin",
+      actor: await actorEmail(context.userId),
     });
     return { ok: true };
   });
 
 export const adminUpdateRequestStatus = createServerFn({ method: "POST" })
-  .inputValidator((d: { password: string; id: string; status: "approved" | "rejected" | "pending" }) => d)
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string; status: "approved" | "rejected" | "pending" }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAdminRole(context.userId);
     const { data: existing } = await supabaseAdmin
       .from("blood_requests")
       .select("attendant_name, hospital, blood_group")
-      .eq("id", data.id)
-      .single();
+      .eq("id", data.id).single();
     const { error } = await supabaseAdmin
       .from("blood_requests")
       .update({ admin_status: data.status })
@@ -86,12 +86,11 @@ export const adminUpdateRequestStatus = createServerFn({ method: "POST" })
       target_type: "request",
       target_id: data.id,
       target_label: label,
-      actor: "admin",
+      actor: await actorEmail(context.userId),
     });
     return { ok: true };
   });
 
-// Simple compatibility groups for matching donations
 const COMPAT: Record<string, string[]> = {
   "O-": ["O-"],
   "O+": ["O+", "O-"],
@@ -104,14 +103,12 @@ const COMPAT: Record<string, string[]> = {
 };
 
 export const adminGetRequestDetail = createServerFn({ method: "POST" })
-  .inputValidator((d: { password: string; id: string }) => d)
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data, context }) => {
+    await assertAdminRole(context.userId);
     const { data: req, error } = await supabaseAdmin
-      .from("blood_requests")
-      .select("*")
-      .eq("id", data.id)
-      .single();
+      .from("blood_requests").select("*").eq("id", data.id).single();
     if (error) throw new Error(error.message);
 
     const groups = COMPAT[req.blood_group] ?? [req.blood_group];
@@ -122,7 +119,6 @@ export const adminGetRequestDetail = createServerFn({ method: "POST" })
       .in("blood_group", groups);
     if (dErr) throw new Error(dErr.message);
 
-    // Sort by locality match (simple proximity heuristic)
     const target = (req.locality || req.hospital || "").toLowerCase();
     const sorted = [...(donors ?? [])].sort((a, b) => {
       const al = (a.locality || "").toLowerCase();
@@ -137,9 +133,9 @@ export const adminGetRequestDetail = createServerFn({ method: "POST" })
   });
 
 export const adminGetStats = createServerFn({ method: "POST" })
-  .inputValidator((d: { password: string }) => d)
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdminRole(context.userId);
     const [totalDonors, pendingDonors, approvedDonors, totalRequests, pendingRequests] = await Promise.all([
       supabaseAdmin.from("donors").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("donors").select("id", { count: "exact", head: true }).eq("status", "pending"),
@@ -157,10 +153,11 @@ export const adminGetStats = createServerFn({ method: "POST" })
   });
 
 export const adminListAudit = createServerFn({ method: "POST" })
-  .inputValidator((d: { password: string; limit?: number }) => d)
-  .handler(async ({ data }) => {
-    assertAdmin(data.password);
-    const limit = Math.min(Math.max(data.limit ?? 500, 1), 2000);
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { limit?: number }) => d ?? {})
+  .handler(async ({ data, context }) => {
+    await assertAdminRole(context.userId);
+    const limit = Math.min(Math.max(data?.limit ?? 500, 1), 2000);
     const { data: rows, error } = await supabaseAdmin
       .from("admin_audit_log")
       .select("id, action, target_type, target_id, target_label, actor, created_at")
