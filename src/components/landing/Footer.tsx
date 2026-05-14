@@ -153,18 +153,17 @@ function HelplineCol() {
         <dt className="sr-only">Phone</dt>
         <dd className="contents">
           <Phone className="mt-2.5 h-4 w-4 text-primary" aria-hidden="true" />
-          <a
-            href="tel:+911140000000"
-            aria-label="Call Redstream emergency helpline at +91 11 4000 0000"
-            className="-my-1 inline-flex min-h-11 items-center break-all py-1 text-base font-semibold text-primary hover:underline"
+          <span
+            aria-label="Helpline launching June 2026"
+            className="-my-1 inline-flex min-h-11 items-center py-1 text-sm font-semibold text-primary"
           >
-            +91 11 4000 0000
-          </a>
+            Helpline launching June 2026
+          </span>
         </dd>
         <dt className="sr-only">Coverage</dt>
         <dd className="contents">
           <MapPin className="mt-1 h-4 w-4 text-muted-foreground" aria-hidden="true" />
-          <span className="text-xs text-muted-foreground">Available 24/7 across Delhi NCR</span>
+          <span className="text-xs text-muted-foreground">24/7 coverage across Delhi NCR at launch</span>
         </dd>
       </dl>
     </div>
