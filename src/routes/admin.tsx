@@ -173,7 +173,13 @@ function LoginScreen() {
 
 function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [tab, setTab] = useState<"donors" | "requests" | "audit">("donors");
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [stats, setStats] = useState<Stats>({
+    totalDonors: 0,
+    pendingDonors: 0,
+    approvedDonors: 0,
+    totalRequests: 0,
+    pendingRequests: 0,
+  });
   const [statsErr, setStatsErr] = useState<string | null>(null);
   const [openRequest, setOpenRequest] = useState<string | null>(null);
 
@@ -215,10 +221,10 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
       <main className="mx-auto max-w-6xl px-5 py-7">
         {/* Stats */}
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 mb-6">
-          <StatCard label="Total donors" value={stats?.totalDonors} icon={Users} />
-          <StatCard label="Pending approvals" value={stats?.pendingDonors} icon={Clock} tone="amber" />
-          <StatCard label="Verified donors" value={stats?.approvedDonors} icon={ShieldCheck} tone="emerald" />
-          <StatCard label="Total requests" value={stats?.totalRequests} icon={HeartPulse} tone="primary" />
+          <StatCard label="Total donors" value={stats.totalDonors} icon={Users} />
+          <StatCard label="Pending approvals" value={stats.pendingDonors} icon={Clock} tone="amber" />
+          <StatCard label="Verified donors" value={stats.approvedDonors} icon={ShieldCheck} tone="emerald" />
+          <StatCard label="Total requests" value={stats.totalRequests} icon={HeartPulse} tone="primary" />
         </div>
         {statsErr ? <p className="mb-4 text-xs text-red-600">{statsErr}</p> : null}
 
