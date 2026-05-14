@@ -1,10 +1,10 @@
 import { AnimatedCounter } from "./AnimatedCounter";
 
 const STATS = [
-  { num: 8400, suffix: "+", label: "Active donors", hint: "Verified across NCR" },
-  { num: 2150, suffix: "", label: "Lives supported", hint: "Since 2022" },
-  { num: 11, suffix: " min", label: "Avg response time", hint: "Match to confirmation" },
-  { num: 42, suffix: "", label: "Delhi coverage zones", hint: "From Dwarka to Noida" },
+  { num: 47, suffix: "", label: "Active donors", hint: "Verified across NCR" },
+  { num: 12, suffix: "", label: "Lives supported", hint: "Since launch" },
+  { num: 18, suffix: " min", label: "Avg response time", hint: "Match to confirmation" },
+  { num: 10, suffix: "", label: "Delhi coverage zones", hint: "From Dwarka to Noida" },
 ];
 
 export function ImpactMetrics() {
