@@ -1,11 +1,41 @@
 import { useState } from "react";
-import { Heart, Mail } from "lucide-react";
+import { Heart, Mail, Check, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const AMOUNTS = [50, 100, 500, 1000, 2500];
 
 export function SupportMission() {
   const [selected, setSelected] = useState<number | "custom">(500);
   const [custom, setCustom] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [name, setName] = useState<string>("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const amount =
+    selected === "custom" ? Math.floor(Number(custom) || 0) : selected;
+  const validAmount = amount > 0 && amount <= 10_000_000;
+  const validEmail =
+    email.trim().length === 0 ||
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
+  const onSubmit = async () => {
+    if (!validAmount || !validEmail || submitting) return;
+    setSubmitting(true);
+    setError(null);
+    const { error } = await supabase.from("donation_intents").insert({
+      amount,
+      email: email.trim() || null,
+      name: name.trim() || null,
+    });
+    setSubmitting(false);
+    if (error) {
+      setError("Couldn't record your interest. Please try again or email us.");
+      return;
+    }
+    setSubmitted(true);
+  };
 
   return (
     <section
@@ -87,20 +117,53 @@ export function SupportMission() {
                 />
               </label>
             </div>
+
+            <div className="mx-auto mt-4 grid max-w-xl gap-3 sm:grid-cols-2">
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value.slice(0, 120))}
+                placeholder="Your name (optional)"
+                disabled={submitted}
+                className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
+              />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value.slice(0, 254))}
+                placeholder="Email (optional, to notify you)"
+                disabled={submitted}
+                className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
+              />
+            </div>
           </div>
 
           <div className="mx-auto mt-8 max-w-md">
             <button
               type="button"
-              disabled
-              aria-disabled="true"
-              title="Secure donation portal launching soon"
-              className="inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-full px-6 py-4 text-base font-semibold text-primary-foreground opacity-60 shadow-[var(--shadow-soft)]"
+              onClick={onSubmit}
+              disabled={!validAmount || !validEmail || submitting || submitted}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-4 text-base font-semibold text-primary-foreground shadow-[var(--shadow-soft)] transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
               style={{ backgroundImage: "var(--gradient-emergency)" }}
             >
-              <Heart className="h-4 w-4" />
-              Donate Now
+              {submitted ? (
+                <>
+                  <Check className="h-4 w-4" /> Thank you — we'll be in touch
+                </>
+              ) : submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Recording…
+                </>
+              ) : (
+                <>
+                  <Heart className="h-4 w-4" /> Pledge ₹{amount.toLocaleString("en-IN")}
+                </>
+              )}
             </button>
+
+            {error ? (
+              <p className="mt-3 text-center text-xs text-primary">{error}</p>
+            ) : null}
 
             <p className="mt-3 flex flex-wrap items-center justify-center gap-1.5 text-center text-xs leading-relaxed text-muted-foreground">
               <span>Secure donation portal launching soon. To donate now write to</span>
