@@ -20,24 +20,30 @@ async function actorEmail(userId: string): Promise<string> {
 
 export const adminListDonors = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: { source?: "form" | "chatbot" | "all" } | undefined) => d ?? {})
+  .handler(async ({ data, context }) => {
     await assertAdminRole(context.userId);
-    const { data: donors, error } = await supabaseAdmin
+    let q = supabaseAdmin
       .from("donors")
-      .select("id, full_name, phone, blood_group, locality, pincode, status, verified, created_at, last_donation_date")
+      .select("id, full_name, phone, blood_group, locality, pincode, status, verified, created_at, last_donation_date, age, availability, id_proof_url, source")
       .order("created_at", { ascending: false });
+    if (data?.source && data.source !== "all") q = q.eq("source", data.source);
+    const { data: donors, error } = await q;
     if (error) throw new Error(error.message);
     return { donors: donors ?? [] };
   });
 
 export const adminListRequests = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((d: { source?: "form" | "chatbot" | "all" } | undefined) => d ?? {})
+  .handler(async ({ data, context }) => {
     await assertAdminRole(context.userId);
-    const { data: requests, error } = await supabaseAdmin
+    let q = supabaseAdmin
       .from("blood_requests")
-      .select("id, attendant_name, attendant_phone, blood_group, hospital, locality, units, urgency, component, patient_age, status, admin_status, created_at")
+      .select("id, attendant_name, attendant_phone, blood_group, hospital, locality, units, urgency, component, patient_age, status, admin_status, created_at, patient_name, requisition_url, source")
       .order("created_at", { ascending: false });
+    if (data?.source && data.source !== "all") q = q.eq("source", data.source);
+    const { data: requests, error } = await q;
     if (error) throw new Error(error.message);
     return { requests: requests ?? [] };
   });
