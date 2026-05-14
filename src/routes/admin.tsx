@@ -196,7 +196,7 @@ function LoginScreen() {
 }
 
 function Dashboard({ onLogout }: { onLogout: () => void }) {
-  const [tab, setTab] = useState<"donors" | "requests" | "audit" | "settings">("donors");
+  const [tab, setTab] = useState<"donors" | "requests" | "chat" | "audit" | "settings">("donors");
   const [stats, setStats] = useState<Stats>({
     totalDonors: 0,
     pendingDonors: 0,
@@ -256,16 +256,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         <div className="mb-5 inline-flex rounded-xl border border-border bg-white p-1 shadow-[var(--shadow-soft)]">
           <TabButton active={tab === "donors"} onClick={() => setTab("donors")} icon={Users}>Donors</TabButton>
           <TabButton active={tab === "requests"} onClick={() => setTab("requests")} icon={Inbox}>Patient requests</TabButton>
+          <TabButton active={tab === "chat"} onClick={() => setTab("chat")} icon={Bot}>Chat submissions</TabButton>
           <TabButton active={tab === "audit"} onClick={() => setTab("audit")} icon={ScrollText}>Audit log</TabButton>
           <TabButton active={tab === "settings"} onClick={() => setTab("settings")} icon={SettingsIcon}>Settings</TabButton>
         </div>
 
         {tab === "donors" ? (
-          <DonorsTab onChange={loadStats} onUnauthorized={onLogout} />
+          <DonorsTab source="form" onChange={loadStats} onUnauthorized={onLogout} />
         ) : tab === "audit" ? (
           <AuditTab onUnauthorized={onLogout} />
         ) : tab === "settings" ? (
           <SettingsTab onUnauthorized={onLogout} />
+        ) : tab === "chat" ? (
+          <ChatSubmissionsTab onChange={loadStats} onUnauthorized={onLogout} />
         ) : openRequest ? (
           <RequestDetail
             
@@ -275,7 +278,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           />
         ) : (
           <RequestsTab
-            
+            source="form"
             onChange={loadStats}
             onOpen={(id) => setOpenRequest(id)}
             onUnauthorized={onLogout}
