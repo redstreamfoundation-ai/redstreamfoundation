@@ -836,27 +836,40 @@ function RequestsTab({
               <SortTh label="Units" col="units" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("units")} />
               <SortTh label="Submitted" col="created_at" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("created_at")} />
               <SortTh label="Status" col="admin_status" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("admin_status")} />
+              {showDocument ? <Th>Requisition</Th> : null}
               <Th className="text-right">Actions</Th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {pageRows === null ? (
-              <tr><td colSpan={8} className="px-5 py-8 text-center text-sm text-muted-foreground"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>
+              <tr><td colSpan={showDocument ? 9 : 8} className="px-5 py-8 text-center text-sm text-muted-foreground"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>
             ) : pageRows.length === 0 ? (
-              <tr><td colSpan={8} className="px-5 py-8 text-center text-sm text-muted-foreground">No requests match these filters.</td></tr>
+              <tr><td colSpan={showDocument ? 9 : 8} className="px-5 py-8 text-center text-sm text-muted-foreground">No requests match these filters.</td></tr>
             ) : pageRows.map((r) => (
               <tr
                 key={r.id}
                 onClick={() => r.admin_status === "approved" && onOpen(r.id)}
                 className={`hover:bg-secondary/40 ${r.admin_status === "approved" ? "cursor-pointer" : ""}`}
               >
-                <Td className="font-medium text-foreground">{r.attendant_name}</Td>
+                <Td className="font-medium text-foreground">
+                  {r.patient_name ? (
+                    <div>
+                      <div>{r.patient_name}</div>
+                      <div className="text-[11px] text-muted-foreground">via {r.attendant_name}</div>
+                    </div>
+                  ) : r.attendant_name}
+                </Td>
                 <Td><span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-bold text-primary">{r.blood_group}</span></Td>
                 <Td>{r.hospital}</Td>
                 <Td>{r.attendant_phone}</Td>
                 <Td>{r.units}</Td>
                 <Td className="text-muted-foreground">{fmtDate(r.created_at)}</Td>
                 <Td><StatusBadge status={r.admin_status} /></Td>
+                {showDocument ? (
+                  <Td onClick={(e) => e.stopPropagation()}>
+                    <DocumentLink bucket="blood-requisitions" path={r.requisition_url ?? null} />
+                  </Td>
+                ) : null}
                 <Td className="text-right" onClick={(e) => e.stopPropagation()}>
                   <RequestActions
                     status={r.admin_status}
@@ -865,6 +878,7 @@ function RequestsTab({
                     onReject={() => setReqStatus(r.id, "rejected")}
                     onFulfill={() => setReqStatus(r.id, "fulfilled")}
                     onEdit={() => setEditing(r)}
+                    onDelete={() => deleteReq(r)}
                   />
                 </Td>
               </tr>
