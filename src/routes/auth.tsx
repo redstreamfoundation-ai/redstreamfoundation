@@ -39,21 +39,32 @@ function AuthPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: { full_name: fullName },
-            emailRedirectTo: window.location.origin + "/donor/dashboard",
+            emailRedirectTo: window.location.origin + redirect,
           },
         });
         if (error) throw error;
+        if (!data.session) {
+          // Fallback: sign in immediately (auto-confirm is enabled, but be safe)
+          const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+          if (signInErr) throw signInErr;
+        }
+        navigate({ to: redirect, replace: true });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        navigate({ to: redirect, replace: true });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Authentication failed");
