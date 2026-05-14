@@ -104,7 +104,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
               description:
                 "Delhi-based non-profit coordinating verified emergency blood donations across the NCR by matching patients with nearby volunteer donors.",
               areaServed: "Delhi NCR, India",
-              telephone: "+91-11-4000-0000",
             },
             {
               "@type": "WebSite",
