@@ -64,6 +64,25 @@ type ReqData = {
 
 const VALID_BLOOD = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
+const HELPLINE_PHONE = "+91 11 4000 0000";
+const HELPLINE_TEL = "+911140000000";
+const HELPLINE_EMAIL = "help@redstreamfoundation.org";
+
+const HELP_TEXT = {
+  en: `We're here for you 💛\n\n📞 Emergency helpline: ${HELPLINE_PHONE} (24×7)\n✉️ Email: ${HELPLINE_EMAIL}\n\nFor a life-threatening emergency, please also call 112 and head to the nearest hospital. You can type 'register donor' to sign up as a donor, 'need blood' to request blood, or 'restart' to start over.`,
+  hi: `हम आपके साथ हैं 💛\n\n📞 आपातकालीन हेल्पलाइन: ${HELPLINE_PHONE} (24×7)\n✉️ ईमेल: ${HELPLINE_EMAIL}\n\nजान को ख़तरा हो तो कृपया 112 पर भी कॉल करें और नज़दीकी अस्पताल जाएँ। डोनर बनने के लिए 'register donor', रक्त की ज़रूरत के लिए 'need blood', या फिर से शुरू करने के लिए 'restart' लिखें।`,
+} as const;
+
+const RESTART_TEXT = {
+  en: "Okay, let's start fresh. 🌱 Would you like to register as a blood donor, or do you need to request blood for a patient? You can also type 'help' anytime.",
+  hi: "ठीक है, हम फिर से शुरू करते हैं। 🌱 क्या आप रक्तदाता के रूप में पंजीकरण करना चाहेंगे, या आपको किसी मरीज़ के लिए रक्त चाहिए? कभी भी 'help' लिख सकते हैं।",
+} as const;
+
+const NUDGE_TEXT = {
+  en: "I'm here to help, and I want to make this easy for you. 💛 Would you like to:\n\n• Register as a blood donor — type 'register donor'\n• Request blood for a patient — type 'need blood'\n• See helpline contacts — type 'help'\n\nYou can write in English or Hindi, whichever feels comfortable.",
+  hi: "मैं आपकी मदद के लिए यहाँ हूँ, और इसे आसान बनाना चाहता हूँ। 💛 क्या आप:\n\n• रक्तदाता बनना चाहते हैं — 'register donor' लिखें\n• किसी मरीज़ के लिए रक्त चाहिए — 'need blood' लिखें\n• हेल्पलाइन संपर्क देखना चाहते हैं — 'help' लिखें\n\nआप अंग्रेज़ी या हिंदी, जो भी सहज लगे, में लिख सकते हैं।",
+} as const;
+
 const T = {
   en: {
     askName: "Great! Let's register you as a donor. What is your full name?",
@@ -194,6 +213,29 @@ function isRequestIntent(text: string): boolean {
     /\b(request|require|looking for).*(blood|donor)\b/.test(t) ||
     /\b(blood|plasma|platelets).*(needed|required|urgent)\b/.test(t) ||
     /रक्त चाहिए|खून चाहिए|ब्लड चाहिए|रक्त की ज़रूरत|खून की ज़रूरत|रिक्वेस्ट/.test(text)
+  );
+}
+
+function isHelpIntent(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  return (
+    t === "help" ||
+    t === "/help" ||
+    t === "?" ||
+    /^help\b/.test(t) ||
+    /मदद|सहायता|हेल्प/.test(text)
+  );
+}
+
+function isRestartIntent(text: string): boolean {
+  const t = text.trim().toLowerCase();
+  return (
+    t === "restart" ||
+    t === "/restart" ||
+    t === "reset" ||
+    t === "start over" ||
+    /^restart\b/.test(t) ||
+    /फिर\s*से\s*शुरू|दोबारा\s*शुरू|रीस्टार्ट|शुरू\s*से/.test(text)
   );
 }
 
@@ -529,6 +571,22 @@ export function ChatWidget() {
     setMessages(next);
     setInput("");
 
+    const lang = detectLang(text);
+
+    // Global commands — always available, even mid-flow
+    if (isHelpIntent(text)) {
+      pushAssistant(HELP_TEXT[lang]);
+      return;
+    }
+    if (isRestartIntent(text)) {
+      setRegStep("idle");
+      setRegData({});
+      setReqStep("idle");
+      setReqData({});
+      pushAssistant(RESTART_TEXT[lang]);
+      return;
+    }
+
     // If we're inside the registration flow, handle scripted step
     if (regStep !== "idle" && regStep !== "done") {
       await handleRegistrationStep(text);
@@ -541,11 +599,11 @@ export function ChatWidget() {
 
     // Detect donor-registration intent and start flow
     if (isDonorIntent(text)) {
-      await startRegistration(detectLang(text));
+      await startRegistration(lang);
       return;
     }
     if (isRequestIntent(text)) {
-      await startRequest(detectLang(text));
+      await startRequest(lang);
       return;
     }
 
@@ -560,11 +618,9 @@ export function ChatWidget() {
       const res = await sendChat({ data: { messages: history } });
       setMessages((prev) => [...prev, { role: "assistant", content: res.reply }]);
     } catch (err) {
-      const msg =
-        err instanceof Error
-          ? err.message
-          : "Sorry, something went wrong. Please try again.";
-      setError(msg);
+      // Soft fallback — gently guide the user back to the main options
+      console.error(err);
+      pushAssistant(NUDGE_TEXT[lang]);
     } finally {
       setLoading(false);
     }
