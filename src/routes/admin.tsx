@@ -30,6 +30,9 @@ import {
   MessageSquare,
   Mail,
   Shield,
+  FileText,
+  Bot,
+  ExternalLink,
 } from "lucide-react";
 import {
   adminListDonors,
@@ -42,6 +45,8 @@ import {
   adminUpdateDonor,
   adminDeleteDonor,
   adminUpdateRequest,
+  adminDeleteRequest,
+  adminGetSignedDocumentUrl,
   adminGetSettings,
   adminUpdateSettings,
 } from "@/lib/admin.functions";
@@ -69,6 +74,8 @@ type Donor = {
   verified: boolean;
   created_at: string;
   last_donation_date: string | null;
+  id_proof_url?: string | null;
+  source?: string | null;
 };
 
 type RequestRow = {
@@ -85,6 +92,9 @@ type RequestRow = {
   status: string;
   admin_status: string;
   created_at: string;
+  patient_name?: string | null;
+  requisition_url?: string | null;
+  source?: string | null;
 };
 
 type Stats = {
@@ -186,7 +196,7 @@ function LoginScreen() {
 }
 
 function Dashboard({ onLogout }: { onLogout: () => void }) {
-  const [tab, setTab] = useState<"donors" | "requests" | "audit" | "settings">("donors");
+  const [tab, setTab] = useState<"donors" | "requests" | "chat" | "audit" | "settings">("donors");
   const [stats, setStats] = useState<Stats>({
     totalDonors: 0,
     pendingDonors: 0,
@@ -246,16 +256,19 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         <div className="mb-5 inline-flex rounded-xl border border-border bg-white p-1 shadow-[var(--shadow-soft)]">
           <TabButton active={tab === "donors"} onClick={() => setTab("donors")} icon={Users}>Donors</TabButton>
           <TabButton active={tab === "requests"} onClick={() => setTab("requests")} icon={Inbox}>Patient requests</TabButton>
+          <TabButton active={tab === "chat"} onClick={() => setTab("chat")} icon={Bot}>Chat submissions</TabButton>
           <TabButton active={tab === "audit"} onClick={() => setTab("audit")} icon={ScrollText}>Audit log</TabButton>
           <TabButton active={tab === "settings"} onClick={() => setTab("settings")} icon={SettingsIcon}>Settings</TabButton>
         </div>
 
         {tab === "donors" ? (
-          <DonorsTab onChange={loadStats} onUnauthorized={onLogout} />
+          <DonorsTab source="form" onChange={loadStats} onUnauthorized={onLogout} />
         ) : tab === "audit" ? (
           <AuditTab onUnauthorized={onLogout} />
         ) : tab === "settings" ? (
           <SettingsTab onUnauthorized={onLogout} />
+        ) : tab === "chat" ? (
+          <ChatSubmissionsTab onChange={loadStats} onUnauthorized={onLogout} />
         ) : openRequest ? (
           <RequestDetail
             
@@ -265,7 +278,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           />
         ) : (
           <RequestsTab
-            
+            source="form"
             onChange={loadStats}
             onOpen={(id) => setOpenRequest(id)}
             onUnauthorized={onLogout}
@@ -375,7 +388,12 @@ const PAGE_SIZES = [10, 25, 50, 100];
 
 type SortDir = "asc" | "desc";
 
-function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnauthorized: () => void }) {
+function DonorsTab({
+  source = "form",
+  onChange,
+  onUnauthorized,
+}: { source?: "form" | "chatbot" | "all"; onChange: () => void; onUnauthorized: () => void }) {
+  const showDocument = source === "chatbot";
   const [donors, setDonors] = useState<Donor[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -394,7 +412,7 @@ function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnaut
 
   async function load() {
     try {
-      const { donors } = await adminListDonors({});
+      const { donors } = await adminListDonors({ data: { source } });
       setDonors(donors as Donor[]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to load";
@@ -402,7 +420,7 @@ function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnaut
       else setErr(msg);
     }
   }
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [source]);
 
   async function setDonorStatus(id: string, next: "approved" | "rejected") {
     setBusyId(id);
@@ -515,14 +533,15 @@ function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnaut
               <SortTh label="Last donation" col="last_donation_date" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("last_donation_date")} />
               <SortTh label="Signed up" col="created_at" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("created_at")} />
               <SortTh label="Status" col="status" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("status")} />
+              {showDocument ? <Th>ID proof</Th> : null}
               <Th className="text-right">Actions</Th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {pageRows === null ? (
-              <tr><td colSpan={8} className="px-5 py-8 text-center text-sm text-muted-foreground"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>
+              <tr><td colSpan={showDocument ? 9 : 8} className="px-5 py-8 text-center text-sm text-muted-foreground"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>
             ) : pageRows.length === 0 ? (
-              <tr><td colSpan={8} className="px-5 py-8 text-center text-sm text-muted-foreground">No donors match these filters.</td></tr>
+              <tr><td colSpan={showDocument ? 9 : 8} className="px-5 py-8 text-center text-sm text-muted-foreground">No donors match these filters.</td></tr>
             ) : pageRows.map((d) => (
               <tr key={d.id} className="hover:bg-secondary/40">
                 <Td className="font-medium text-foreground">{d.full_name}</Td>
@@ -532,6 +551,11 @@ function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnaut
                 <Td className="text-muted-foreground">{d.last_donation_date ? new Date(d.last_donation_date).toLocaleDateString("en-IN", { dateStyle: "medium" }) : "—"}</Td>
                 <Td className="text-muted-foreground">{fmtDate(d.created_at)}</Td>
                 <Td><StatusBadge status={d.status} /></Td>
+                {showDocument ? (
+                  <Td>
+                    <DocumentLink bucket="donor-id-proofs" path={d.id_proof_url ?? null} />
+                  </Td>
+                ) : null}
                 <Td className="text-right">
                   <div className="flex items-center justify-end gap-1.5">
                     <ActionButtons
@@ -680,8 +704,9 @@ function FieldInput({
 }
 
 function RequestsTab({
-  onChange, onOpen, onUnauthorized,
-}: { onChange: () => void; onOpen: (id: string) => void; onUnauthorized: () => void }) {
+  source = "form", onChange, onOpen, onUnauthorized,
+}: { source?: "form" | "chatbot" | "all"; onChange: () => void; onOpen: (id: string) => void; onUnauthorized: () => void }) {
+  const showDocument = source === "chatbot";
   const [rows, setRows] = useState<RequestRow[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -698,7 +723,7 @@ function RequestsTab({
 
   async function load() {
     try {
-      const { requests } = await adminListRequests({});
+      const { requests } = await adminListRequests({ data: { source } });
       setRows(requests as RequestRow[]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to load";
@@ -706,7 +731,7 @@ function RequestsTab({
       else setErr(msg);
     }
   }
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [source]);
 
   async function setReqStatus(id: string, next: "approved" | "rejected" | "fulfilled" | "pending") {
     setBusyId(id);
@@ -716,6 +741,21 @@ function RequestsTab({
       onChange();
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Update failed");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function deleteReq(r: RequestRow) {
+    const label = r.patient_name || r.attendant_name;
+    if (!window.confirm(`Delete request for "${label}"? This cannot be undone.`)) return;
+    setBusyId(r.id);
+    try {
+      await adminDeleteRequest({ data: { id: r.id } });
+      await load();
+      onChange();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Delete failed");
     } finally {
       setBusyId(null);
     }
@@ -796,27 +836,40 @@ function RequestsTab({
               <SortTh label="Units" col="units" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("units")} />
               <SortTh label="Submitted" col="created_at" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("created_at")} />
               <SortTh label="Status" col="admin_status" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("admin_status")} />
+              {showDocument ? <Th>Requisition</Th> : null}
               <Th className="text-right">Actions</Th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {pageRows === null ? (
-              <tr><td colSpan={8} className="px-5 py-8 text-center text-sm text-muted-foreground"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>
+              <tr><td colSpan={showDocument ? 9 : 8} className="px-5 py-8 text-center text-sm text-muted-foreground"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>
             ) : pageRows.length === 0 ? (
-              <tr><td colSpan={8} className="px-5 py-8 text-center text-sm text-muted-foreground">No requests match these filters.</td></tr>
+              <tr><td colSpan={showDocument ? 9 : 8} className="px-5 py-8 text-center text-sm text-muted-foreground">No requests match these filters.</td></tr>
             ) : pageRows.map((r) => (
               <tr
                 key={r.id}
                 onClick={() => r.admin_status === "approved" && onOpen(r.id)}
                 className={`hover:bg-secondary/40 ${r.admin_status === "approved" ? "cursor-pointer" : ""}`}
               >
-                <Td className="font-medium text-foreground">{r.attendant_name}</Td>
+                <Td className="font-medium text-foreground">
+                  {r.patient_name ? (
+                    <div>
+                      <div>{r.patient_name}</div>
+                      <div className="text-[11px] text-muted-foreground">via {r.attendant_name}</div>
+                    </div>
+                  ) : r.attendant_name}
+                </Td>
                 <Td><span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-bold text-primary">{r.blood_group}</span></Td>
                 <Td>{r.hospital}</Td>
                 <Td>{r.attendant_phone}</Td>
                 <Td>{r.units}</Td>
                 <Td className="text-muted-foreground">{fmtDate(r.created_at)}</Td>
                 <Td><StatusBadge status={r.admin_status} /></Td>
+                {showDocument ? (
+                  <Td onClick={(e) => e.stopPropagation()}>
+                    <DocumentLink bucket="blood-requisitions" path={r.requisition_url ?? null} />
+                  </Td>
+                ) : null}
                 <Td className="text-right" onClick={(e) => e.stopPropagation()}>
                   <RequestActions
                     status={r.admin_status}
@@ -825,6 +878,7 @@ function RequestsTab({
                     onReject={() => setReqStatus(r.id, "rejected")}
                     onFulfill={() => setReqStatus(r.id, "fulfilled")}
                     onEdit={() => setEditing(r)}
+                    onDelete={() => deleteReq(r)}
                   />
                 </Td>
               </tr>
@@ -851,8 +905,8 @@ function RequestsTab({
 }
 
 function RequestActions({
-  status, onApprove, onReject, onFulfill, onEdit, busy,
-}: { status: string; onApprove: () => void; onReject: () => void; onFulfill: () => void; onEdit: () => void; busy: boolean }) {
+  status, onApprove, onReject, onFulfill, onEdit, onDelete, busy,
+}: { status: string; onApprove: () => void; onReject: () => void; onFulfill: () => void; onEdit: () => void; onDelete?: () => void; busy: boolean }) {
   return (
     <div className="flex items-center justify-end gap-1.5 flex-wrap">
       {status !== "approved" && status !== "fulfilled" ? (
@@ -873,6 +927,11 @@ function RequestActions({
       <button onClick={onEdit} disabled={busy} className="inline-flex items-center gap-1 rounded-md border border-border bg-white px-2 py-1 text-[11px] font-semibold text-foreground hover:bg-secondary disabled:opacity-50">
         <Pencil className="h-3 w-3" /> Edit
       </button>
+      {onDelete ? (
+        <button onClick={onDelete} disabled={busy} className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50">
+          <Trash2 className="h-3 w-3" /> Delete
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -1513,6 +1572,80 @@ function Section({
         {title}
       </div>
       <div className="space-y-3">{children}</div>
+    </div>
+  );
+}
+
+function ChatSubmissionsTab({
+  onChange, onUnauthorized,
+}: { onChange: () => void; onUnauthorized: () => void }) {
+  const [sub, setSub] = useState<"donors" | "requests">("donors");
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-3 rounded-2xl border border-border bg-card px-5 py-4 shadow-[var(--shadow-soft)]">
+        <div className="flex items-start gap-3">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
+            <Bot className="h-4 w-4" />
+          </span>
+          <div>
+            <h2 className="font-serif-display text-lg text-foreground">Chat submissions</h2>
+            <p className="text-xs text-muted-foreground">
+              Donor registrations and patient requests received through the in-app chatbot, separate from regular form submissions.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div className="inline-flex rounded-xl border border-border bg-white p-1 shadow-[var(--shadow-soft)]">
+        <TabButton active={sub === "donors"} onClick={() => setSub("donors")} icon={Users}>Donor signups</TabButton>
+        <TabButton active={sub === "requests"} onClick={() => setSub("requests")} icon={Inbox}>Patient requests</TabButton>
+      </div>
+      {sub === "donors" ? (
+        <DonorsTab source="chatbot" onChange={onChange} onUnauthorized={onUnauthorized} />
+      ) : (
+        <RequestsTab
+          source="chatbot"
+          onChange={onChange}
+          onOpen={() => { /* detail view not surfaced from chat tab */ }}
+          onUnauthorized={onUnauthorized}
+        />
+      )}
+    </div>
+  );
+}
+
+function DocumentLink({
+  bucket, path,
+}: { bucket: "donor-id-proofs" | "blood-requisitions"; path: string | null }) {
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  if (!path) {
+    return <span className="text-[11px] text-muted-foreground">—</span>;
+  }
+  async function open() {
+    setLoading(true);
+    setErr(null);
+    try {
+      const { url } = await adminGetSignedDocumentUrl({ data: { bucket, path: path! } });
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not open file");
+    } finally {
+      setLoading(false);
+    }
+  }
+  return (
+    <div className="flex flex-col gap-1">
+      <button
+        type="button"
+        onClick={open}
+        disabled={loading}
+        className="inline-flex items-center gap-1 rounded-md border border-border bg-white px-2 py-1 text-[11px] font-semibold text-foreground hover:bg-secondary disabled:opacity-50"
+      >
+        {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
+        View
+        <ExternalLink className="h-3 w-3" />
+      </button>
+      {err ? <span className="text-[10px] text-red-600">{err}</span> : null}
     </div>
   );
 }

@@ -52,6 +52,7 @@ export const submitBloodRequestFromChat = createServerFn({ method: "POST" })
       proof_uploaded: true,
       status: "pending",
       admin_status: "pending",
+      source: "chatbot",
     };
 
     const { error } = await supabase.from("blood_requests").insert(payload);
