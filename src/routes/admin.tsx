@@ -675,6 +675,7 @@ function RequestsTab({
   const [rows, setRows] = useState<RequestRow[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<RequestRow | null>(null);
 
   const [search, setSearch] = useState("");
   const [bg, setBg] = useState("all");
@@ -697,7 +698,7 @@ function RequestsTab({
   }
   useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
 
-  async function setReqStatus(id: string, next: "approved" | "rejected") {
+  async function setReqStatus(id: string, next: "approved" | "rejected" | "fulfilled" | "pending") {
     setBusyId(id);
     try {
       await adminUpdateRequestStatus({ data: { id, status: next } });
@@ -759,6 +760,7 @@ function RequestsTab({
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
+          <option value="fulfilled">Fulfilled</option>
         </FilterSelect>
         <FilterSelect value={bg} onChange={setBg} label="Blood">
           <option value="all">All blood</option>
@@ -805,11 +807,13 @@ function RequestsTab({
                 <Td className="text-muted-foreground">{fmtDate(r.created_at)}</Td>
                 <Td><StatusBadge status={r.admin_status} /></Td>
                 <Td className="text-right" onClick={(e) => e.stopPropagation()}>
-                  <ActionButtons
+                  <RequestActions
                     status={r.admin_status}
                     busy={busyId === r.id}
                     onApprove={() => setReqStatus(r.id, "approved")}
                     onReject={() => setReqStatus(r.id, "rejected")}
+                    onFulfill={() => setReqStatus(r.id, "fulfilled")}
+                    onEdit={() => setEditing(r)}
                   />
                 </Td>
               </tr>
@@ -824,6 +828,141 @@ function RequestsTab({
         </div>
       ) : null}
     </Card>
+    {editing ? (
+      <RequestEditDrawer
+        request={editing}
+        onClose={() => setEditing(null)}
+        onSaved={async () => { setEditing(null); await load(); onChange(); }}
+      />
+    ) : null}
+    </>
+  );
+}
+
+function RequestActions({
+  status, onApprove, onReject, onFulfill, onEdit, busy,
+}: { status: string; onApprove: () => void; onReject: () => void; onFulfill: () => void; onEdit: () => void; busy: boolean }) {
+  return (
+    <div className="flex items-center justify-end gap-1.5 flex-wrap">
+      {status !== "approved" && status !== "fulfilled" ? (
+        <button onClick={onApprove} disabled={busy} className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">
+          <CheckCircle2 className="h-3 w-3" /> Approve
+        </button>
+      ) : null}
+      {status !== "rejected" && status !== "fulfilled" ? (
+        <button onClick={onReject} disabled={busy} className="inline-flex items-center gap-1 rounded-md border border-border bg-white px-2 py-1 text-[11px] font-semibold text-foreground hover:bg-secondary disabled:opacity-50">
+          <XCircle className="h-3 w-3" /> Reject
+        </button>
+      ) : null}
+      {status !== "fulfilled" ? (
+        <button onClick={onFulfill} disabled={busy} className="inline-flex items-center gap-1 rounded-md bg-sky-600 px-2 py-1 text-[11px] font-semibold text-white hover:bg-sky-700 disabled:opacity-50">
+          <CheckCircle2 className="h-3 w-3" /> Fulfilled
+        </button>
+      ) : null}
+      <button onClick={onEdit} disabled={busy} className="inline-flex items-center gap-1 rounded-md border border-border bg-white px-2 py-1 text-[11px] font-semibold text-foreground hover:bg-secondary disabled:opacity-50">
+        <Pencil className="h-3 w-3" /> Edit
+      </button>
+    </div>
+  );
+}
+
+const URGENCIES = ["critical", "within-2h", "within-24h", "planned"];
+const COMPONENTS = ["Whole Blood", "Plasma", "Platelets", "RBC", "SDP"];
+
+function RequestEditDrawer({
+  request, onClose, onSaved,
+}: { request: RequestRow; onClose: () => void; onSaved: () => void }) {
+  const [attendant_name, setName] = useState(request.attendant_name);
+  const [attendant_phone, setPhone] = useState(request.attendant_phone);
+  const [blood_group, setBg] = useState(request.blood_group);
+  const [hospital, setHospital] = useState(request.hospital);
+  const [locality, setLocality] = useState(request.locality);
+  const [units, setUnits] = useState(String(request.units));
+  const [component, setComponent] = useState(request.component);
+  const [urgency, setUrgency] = useState(request.urgency);
+  const [patient_age, setAge] = useState(request.patient_age ?? "");
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setErr(null);
+    try {
+      await adminUpdateRequest({
+        data: {
+          id: request.id,
+          attendant_name: attendant_name.trim(),
+          attendant_phone: attendant_phone.trim(),
+          blood_group,
+          hospital: hospital.trim(),
+          locality: locality.trim(),
+          units: Math.max(1, parseInt(units, 10) || 1),
+          component,
+          urgency,
+          patient_age: patient_age.trim() || null,
+        },
+      });
+      onSaved();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      <button aria-label="Close" onClick={onClose} className="flex-1 bg-black/40" />
+      <form onSubmit={save} className="w-full max-w-md bg-white shadow-2xl flex flex-col h-full">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+          <div>
+            <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">Edit request</div>
+            <div className="font-serif-display text-lg text-foreground">{request.attendant_name}</div>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-md p-1.5 text-muted-foreground hover:bg-secondary">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
+          <FieldInput label="Patient / Attendant name" value={attendant_name} onChange={setName} required />
+          <FieldInput label="Contact phone" value={attendant_phone} onChange={setPhone} required />
+          <div>
+            <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground mb-1">Blood group</div>
+            <select value={blood_group} onChange={(e) => setBg(e.target.value)} className="w-full rounded-md border border-border bg-white px-2.5 py-2 text-sm outline-none focus:border-primary">
+              {BLOOD_GROUPS.map((g) => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </div>
+          <FieldInput label="Hospital" value={hospital} onChange={setHospital} required />
+          <FieldInput label="Locality" value={locality} onChange={setLocality} required />
+          <div>
+            <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground mb-1">Units</div>
+            <input type="number" min={1} value={units} onChange={(e) => setUnits(e.target.value)} className="w-full rounded-md border border-border bg-white px-2.5 py-2 text-sm outline-none focus:border-primary" />
+          </div>
+          <div>
+            <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground mb-1">Component</div>
+            <select value={component} onChange={(e) => setComponent(e.target.value)} className="w-full rounded-md border border-border bg-white px-2.5 py-2 text-sm outline-none focus:border-primary">
+              {COMPONENTS.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground mb-1">Urgency</div>
+            <select value={urgency} onChange={(e) => setUrgency(e.target.value)} className="w-full rounded-md border border-border bg-white px-2.5 py-2 text-sm outline-none focus:border-primary">
+              {URGENCIES.map((u) => <option key={u} value={u}>{u}</option>)}
+            </select>
+          </div>
+          <FieldInput label="Patient age" value={patient_age} onChange={setAge} />
+          {err ? <div className="text-xs text-red-600">{err}</div> : null}
+        </div>
+        <div className="border-t border-border px-5 py-3 flex items-center justify-end gap-2">
+          <button type="button" onClick={onClose} className="rounded-md border border-border bg-white px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary">Cancel</button>
+          <button type="submit" disabled={saving} className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50">
+            {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3 w-3" />}
+            Save changes
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
 
