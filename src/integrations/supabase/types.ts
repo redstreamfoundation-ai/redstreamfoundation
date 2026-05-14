@@ -111,6 +111,7 @@ export type Database = {
           patient_name: string | null
           proof_uploaded: boolean
           requisition_url: string | null
+          source: string
           status: Database["public"]["Enums"]["request_status"]
           units: number
           updated_at: string
@@ -131,6 +132,7 @@ export type Database = {
           patient_name?: string | null
           proof_uploaded?: boolean
           requisition_url?: string | null
+          source?: string
           status?: Database["public"]["Enums"]["request_status"]
           units?: number
           updated_at?: string
@@ -151,6 +153,7 @@ export type Database = {
           patient_name?: string | null
           proof_uploaded?: boolean
           requisition_url?: string | null
+          source?: string
           status?: Database["public"]["Enums"]["request_status"]
           units?: number
           updated_at?: string
@@ -287,6 +290,7 @@ export type Database = {
           pincode: string
           profession: string | null
           reliability_score: number
+          source: string
           status: string
           total_donations: number
           updated_at: string
@@ -307,6 +311,7 @@ export type Database = {
           pincode: string
           profession?: string | null
           reliability_score?: number
+          source?: string
           status?: string
           total_donations?: number
           updated_at?: string
@@ -327,6 +332,7 @@ export type Database = {
           pincode?: string
           profession?: string | null
           reliability_score?: number
+          source?: string
           status?: string
           total_donations?: number
           updated_at?: string
