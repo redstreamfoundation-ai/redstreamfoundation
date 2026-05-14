@@ -1,65 +1,76 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Nav } from "@/components/landing/Nav";
-import { Hero } from "@/components/landing/Hero";
-import { ImpactMetrics } from "@/components/landing/ImpactMetrics";
-import { HowItWorks } from "@/components/landing/HowItWorks";
-import { WhyRedstream } from "@/components/landing/WhyRedstream";
-import { LiveActivityFeed } from "@/components/landing/LiveActivityFeed";
-import { TrustVerification } from "@/components/landing/TrustVerification";
-import { EmergencyCTA } from "@/components/landing/EmergencyCTA";
-import { Footer } from "@/components/landing/Footer";
-import { DelhiTicker } from "@/components/landing/DelhiTicker";
-import { MatchingWave } from "@/components/landing/MatchingWave";
-import { CoverageMap } from "@/components/landing/CoverageMap";
-import { ImpactStories } from "@/components/landing/ImpactStories";
-import { FounderMission } from "@/components/landing/FounderMission";
-import { DelhiPilot } from "@/components/landing/DelhiPilot";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import logoSrc from "@/assets/redstream-logo.png";
 
 export const Route = createFileRoute("/")({
-  component: Index,
+  component: ComingSoon,
   head: () => ({
     meta: [
-      { title: "Redstream Foundation — Emergency Blood Donors in Delhi NCR" },
+      { title: "Redstream Foundation — Coming Soon" },
       {
         name: "description",
         content:
-          "Redstream Foundation is a Delhi non-profit that coordinates verified emergency blood donations 24/7 by matching patients with nearby volunteer donors.",
+          "Redstream Foundation is launching soon. A Delhi-based non-profit coordinating verified emergency blood donations across the NCR.",
       },
-      { property: "og:title", content: "Redstream Foundation — Emergency Blood Donors in Delhi NCR" },
+      { property: "og:title", content: "Redstream Foundation — Coming Soon" },
       {
         property: "og:description",
         content:
-          "Verified, NGO-led emergency blood coordination across Delhi NCR. Request blood or join the donor network.",
+          "Redstream Foundation is launching soon. A Delhi-based non-profit coordinating verified emergency blood donations across the NCR.",
       },
-      { property: "og:url", content: "https://redstreamfoundation.lovable.app/" },
-      { property: "og:image", content: "https://redstreamfoundation.lovable.app/og/home.jpg" },
-      { name: "twitter:image", content: "https://redstreamfoundation.lovable.app/og/home.jpg" },
-      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:url", content: "https://redstreamfoundation.org/" },
+      { name: "twitter:card", content: "summary" },
     ],
-    links: [{ rel: "canonical", href: "https://redstreamfoundation.lovable.app/" }],
+    links: [{ rel: "canonical", href: "https://redstreamfoundation.org/" }],
   }),
 });
 
-function Index() {
+function ComingSoon() {
   return (
-    <div className="min-h-screen bg-background text-foreground page-fade">
-      <Nav />
-      <main>
-        <Hero />
-        <DelhiTicker />
-        <ImpactMetrics />
-        <FounderMission />
-        <HowItWorks />
-        <MatchingWave />
-        <WhyRedstream />
-        <DelhiPilot />
-        <LiveActivityFeed />
-        <CoverageMap />
-        <ImpactStories />
-        <TrustVerification />
-        <EmergencyCTA />
-      </main>
-      <Footer />
-    </div>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--gradient-soft)] px-6 page-fade">
+      <div className="pointer-events-none absolute inset-0 -z-10 opacity-60">
+        <div className="absolute left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--gradient-emergency)] opacity-20 blur-3xl" />
+      </div>
+
+      <div className="mx-auto w-full max-w-xl text-center">
+        <div className="flex justify-center">
+          <img
+            src={logoSrc}
+            alt="Redstream Foundation logo"
+            width={64}
+            height={64}
+            className="h-16 w-16 object-contain"
+          />
+        </div>
+
+        <h1 className="font-serif-display mt-6 text-5xl font-normal tracking-tight text-foreground sm:text-6xl">
+          Redstream Foundation
+        </h1>
+
+        <p className="mt-4 inline-flex items-center justify-center gap-2 rounded-full border border-border bg-background/70 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground backdrop-blur">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-primary opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+          </span>
+          Coming Soon
+        </p>
+
+        <p className="mx-auto mt-6 max-w-md text-base leading-relaxed text-muted-foreground sm:text-lg">
+          We're building a faster, more reliable way to connect patients in
+          urgent need of blood with verified, nearby volunteer donors across
+          Delhi NCR. Our website will be live shortly.
+        </p>
+
+        <p className="mt-10 text-xs text-muted-foreground/80">
+          © {new Date().getFullYear()} Redstream Foundation
+        </p>
+
+        <Link
+          to="/home"
+          className="mt-6 inline-block text-xs text-muted-foreground/60 underline-offset-4 hover:text-muted-foreground hover:underline"
+        >
+          Preview site
+        </Link>
+      </div>
+    </main>
   );
 }
