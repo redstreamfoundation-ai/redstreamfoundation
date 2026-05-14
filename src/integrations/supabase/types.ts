@@ -108,7 +108,9 @@ export type Database = {
           id: string
           locality: string
           patient_age: string | null
+          patient_name: string | null
           proof_uploaded: boolean
+          requisition_url: string | null
           status: Database["public"]["Enums"]["request_status"]
           units: number
           updated_at: string
@@ -126,7 +128,9 @@ export type Database = {
           id?: string
           locality: string
           patient_age?: string | null
+          patient_name?: string | null
           proof_uploaded?: boolean
+          requisition_url?: string | null
           status?: Database["public"]["Enums"]["request_status"]
           units?: number
           updated_at?: string
@@ -144,7 +148,9 @@ export type Database = {
           id?: string
           locality?: string
           patient_age?: string | null
+          patient_name?: string | null
           proof_uploaded?: boolean
+          requisition_url?: string | null
           status?: Database["public"]["Enums"]["request_status"]
           units?: number
           updated_at?: string
