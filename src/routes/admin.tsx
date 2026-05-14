@@ -499,6 +499,7 @@ function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnaut
               <Th>Phone</Th>
               <SortTh label="Blood" col="blood_group" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("blood_group")} />
               <SortTh label="Location" col="locality" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("locality")} />
+              <SortTh label="Last donation" col="last_donation_date" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("last_donation_date")} />
               <SortTh label="Signed up" col="created_at" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("created_at")} />
               <SortTh label="Status" col="status" sortKey={sortKey} sortDir={sortDir} onSort={() => toggleSort("status")} />
               <Th className="text-right">Actions</Th>
@@ -506,24 +507,43 @@ function DonorsTab({ onChange, onUnauthorized }: { onChange: () => void; onUnaut
           </thead>
           <tbody className="divide-y divide-border">
             {pageRows === null ? (
-              <tr><td colSpan={7} className="px-5 py-8 text-center text-sm text-muted-foreground"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>
+              <tr><td colSpan={8} className="px-5 py-8 text-center text-sm text-muted-foreground"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></td></tr>
             ) : pageRows.length === 0 ? (
-              <tr><td colSpan={7} className="px-5 py-8 text-center text-sm text-muted-foreground">No donors match these filters.</td></tr>
+              <tr><td colSpan={8} className="px-5 py-8 text-center text-sm text-muted-foreground">No donors match these filters.</td></tr>
             ) : pageRows.map((d) => (
               <tr key={d.id} className="hover:bg-secondary/40">
                 <Td className="font-medium text-foreground">{d.full_name}</Td>
                 <Td>{d.phone}</Td>
                 <Td><span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-bold text-primary">{d.blood_group}</span></Td>
                 <Td>{[d.locality, d.pincode].filter(Boolean).join(", ")}</Td>
+                <Td className="text-muted-foreground">{d.last_donation_date ? new Date(d.last_donation_date).toLocaleDateString("en-IN", { dateStyle: "medium" }) : "—"}</Td>
                 <Td className="text-muted-foreground">{fmtDate(d.created_at)}</Td>
                 <Td><StatusBadge status={d.status} /></Td>
                 <Td className="text-right">
-                  <ActionButtons
-                    status={d.status}
-                    busy={busyId === d.id}
-                    onApprove={() => setDonorStatus(d.id, "approved")}
-                    onReject={() => setDonorStatus(d.id, "rejected")}
-                  />
+                  <div className="flex items-center justify-end gap-1.5">
+                    <ActionButtons
+                      status={d.status}
+                      busy={busyId === d.id}
+                      onApprove={() => setDonorStatus(d.id, "approved")}
+                      onReject={() => setDonorStatus(d.id, "rejected")}
+                    />
+                    <button
+                      onClick={() => setEditing(d)}
+                      disabled={busyId === d.id}
+                      title="Edit"
+                      className="inline-flex items-center gap-1 rounded-md border border-border bg-white px-2 py-1 text-[11px] font-semibold text-foreground hover:bg-secondary disabled:opacity-50"
+                    >
+                      <Pencil className="h-3 w-3" /> Edit
+                    </button>
+                    <button
+                      onClick={() => deleteDonor(d)}
+                      disabled={busyId === d.id}
+                      title="Delete"
+                      className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3 w-3" /> Delete
+                    </button>
+                  </div>
                 </Td>
               </tr>
             ))}
