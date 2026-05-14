@@ -14,4 +14,14 @@ export default defineConfig({
     tsconfigPaths(),
     tailwindcss(),
   ],
+  optimizeDeps: {
+    exclude: [
+      "@tanstack/start-server-core",
+      "@tanstack/react-start",
+      "@tanstack/react-start-client",
+    ],
+  },
+  ssr: {
+    noExternal: ["@tanstack/start-server-core"],
+  },
 });
