@@ -743,6 +743,7 @@ function RequestsTab({
   const pageRows = filtered ? filtered.slice((page - 1) * pageSize, page * pageSize) : null;
 
   return (
+    <>
     <Card>
       <TableHeader title="Patient requests" count={total} />
       <div className="grid gap-2 border-b border-border bg-secondary/30 px-5 py-3 sm:grid-cols-2 lg:grid-cols-5">
