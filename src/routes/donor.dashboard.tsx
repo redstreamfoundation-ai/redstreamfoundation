@@ -131,8 +131,10 @@ function Dashboard() {
           Hello, <span className="font-serif-display italic text-primary">{name}.</span>
         </h1>
 
+        <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
         {/* Status card */}
-        <section className="mt-6 overflow-hidden rounded-3xl border border-primary/20 bg-[var(--gradient-soft)] p-6 shadow-[var(--shadow-elevated)]">
+        <section className="overflow-hidden rounded-3xl border border-primary/20 bg-[var(--gradient-soft)] p-6 shadow-[var(--shadow-elevated)]">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <span className="relative flex h-2.5 w-2.5">
@@ -170,7 +172,7 @@ function Dashboard() {
         </section>
 
         {/* Impact metrics */}
-        <section className="mt-6 grid grid-cols-3 gap-3">
+        <section className="grid grid-cols-3 gap-3">
           {[
             { v: "0", l: "Donations" },
             { v: "0", l: "Lives helped" },
@@ -187,7 +189,7 @@ function Dashboard() {
         </section>
 
         {/* Cooldown */}
-        <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-soft)]">
+        <section className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-soft)]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary" />
@@ -210,7 +212,7 @@ function Dashboard() {
         </section>
 
         {/* Nearby requests */}
-        <section className="mt-8">
+        <section>
           <div className="flex items-end justify-between">
             <div>
               <div className="text-xs font-medium uppercase tracking-[0.16em] text-primary">
@@ -280,7 +282,9 @@ function Dashboard() {
         </section>
 
         {/* Notification settings */}
-        <section className="mt-8 rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-soft)]">
+        </div>
+        <div className="space-y-6">
+        <section className="rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-soft)]">
           <div className="flex items-center gap-3">
             <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
               <Bell className="h-5 w-5" />
@@ -332,7 +336,7 @@ function Dashboard() {
           </Link>
         </section>
 
-        <section className="mt-6 rounded-2xl border border-border bg-secondary/60 p-5">
+        <section className="rounded-2xl border border-border bg-secondary/60 p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
@@ -350,6 +354,8 @@ function Dashboard() {
             </a>
           </div>
         </section>
+        </div>
+        </div>
       </main>
     </div>
   );
