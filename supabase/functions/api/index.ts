@@ -436,7 +436,11 @@ async function mcToken(): Promise<string> {
   }
   const url = new URL(`${MC_BASE}/auth/v1/authentication/token`);
   url.searchParams.set("customerId", MC_CUSTOMER_ID);
-  url.searchParams.set("key", MC_API_KEY);
+  // Message Central requires `key` to be the base64-encoded password.
+  // Accept either a raw password or an already-base64 value in the secret.
+  const looksBase64 = /^[A-Za-z0-9+/=]+$/.test(MC_API_KEY) && MC_API_KEY.length % 4 === 0;
+  const keyParam = looksBase64 ? MC_API_KEY : btoa(MC_API_KEY);
+  url.searchParams.set("key", keyParam);
   url.searchParams.set("scope", "NEW");
   url.searchParams.set("country", "91");
   const res = await fetch(url.toString(), { method: "GET" });
@@ -444,8 +448,14 @@ async function mcToken(): Promise<string> {
   if (!res.ok) throw new Error(`Message Central token failed [${res.status}]: ${text}`);
   let body: Record<string, unknown> = {};
   try { body = JSON.parse(text); } catch { /* noop */ }
-  const token = (body.token ?? body.authToken) as string | undefined;
-  if (!token) throw new Error("Message Central did not return a token");
+  const data = (body.data as Record<string, unknown> | undefined) ?? {};
+  const token = (body.token ?? body.authToken ?? data.token ?? data.authToken) as
+    | string
+    | undefined;
+  if (!token) {
+    console.error("[api] mcToken response without token:", text);
+    throw new Error(`Message Central did not return a token: ${text.slice(0, 200)}`);
+  }
   return token;
 }
 
