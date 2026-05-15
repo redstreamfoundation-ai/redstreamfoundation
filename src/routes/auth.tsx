@@ -43,9 +43,9 @@ function AuthPage() {
   useEffect(() => {
     if (!loading && session && !navigatedRef.current) {
       navigatedRef.current = true;
-      supabase
+      void supabase
         .rpc("ensure_my_role", { _intended: intendedRole })
-        .finally(() => navigate({ to: redirect, replace: true }));
+        .then(() => navigate({ to: redirect, replace: true }));
     }
   }, [session, loading, navigate, redirect, intendedRole]);
 
