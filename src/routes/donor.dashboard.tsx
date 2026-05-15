@@ -44,36 +44,27 @@ export const Route = createFileRoute("/donor/dashboard")({
   }),
 });
 
-const NEARBY = [
-  {
-    id: "req-1",
-    group: "B+",
-    units: 2,
-    hospital: "Sir Ganga Ram Hospital",
-    zone: "Rajinder Nagar",
-    km: 2.4,
-    urgency: "Critical",
-    posted: "just now",
-  },
-  {
-    id: "req-2",
-    group: "O+",
-    units: 1,
-    hospital: "Max Saket",
-    zone: "Saket",
-    km: 4.1,
-    urgency: "Within 2 hrs",
-    posted: "8 min ago",
-  },
-];
+const NEARBY: Array<{
+  id: string;
+  group: string;
+  units: number;
+  hospital: string;
+  zone: string;
+  km: number;
+  urgency: string;
+  posted: string;
+}> = [];
 
 function Dashboard() {
   const { state, update } = useDonor();
   const name = state.fullName?.split(" ")[0] || "Friend";
-  const lastDonation = state.lastDonation || "2024-09-12";
-  const eligibleOn = computeEligibility(lastDonation);
-  const cooldownDays = daysUntil(eligibleOn);
-  const cooldownPct = Math.min(100, Math.max(0, ((90 - cooldownDays) / 90) * 100));
+  const lastDonation = state.lastDonation || "";
+  const hasDonated = Boolean(lastDonation);
+  const eligibleOn = hasDonated ? computeEligibility(lastDonation) : "";
+  const cooldownDays = hasDonated ? daysUntil(eligibleOn) : 0;
+  const cooldownPct = hasDonated
+    ? Math.min(100, Math.max(0, ((90 - cooldownDays) / 90) * 100))
+    : 0;
 
   const decision = state.lastDecision;
   const setNotif = (k: keyof typeof state.notifications) =>
@@ -82,7 +73,7 @@ function Dashboard() {
   return (
     <div className="min-h-screen bg-background pb-12">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-2xl items-center justify-between px-5 py-3.5">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 md:px-8">
           <Logo />
           <button
             aria-label="Settings"
@@ -93,7 +84,7 @@ function Dashboard() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-5 pt-8">
+      <main className="mx-auto max-w-6xl px-5 pt-8 md:px-8">
         {decision ? (
           <div className="mb-5 flex items-start justify-between gap-3 rounded-2xl border border-border bg-secondary/60 p-4 animate-slide-up">
             <div className="flex items-start gap-3">
@@ -181,9 +172,9 @@ function Dashboard() {
         {/* Impact metrics */}
         <section className="mt-6 grid grid-cols-3 gap-3">
           {[
-            { v: "7", l: "Donations" },
-            { v: "21", l: "Lives helped" },
-            { v: "3.2 yr", l: "With Redstream" },
+            { v: "0", l: "Donations" },
+            { v: "0", l: "Lives helped" },
+            { v: hasDonated ? "Active" : "New", l: "With Redstream" },
           ].map((s) => (
             <div
               key={s.l}
@@ -203,7 +194,7 @@ function Dashboard() {
               <span className="text-sm font-semibold text-foreground">Donation cooldown</span>
             </div>
             <span className="text-xs text-muted-foreground">
-              {cooldownDays > 0 ? `${cooldownDays} days left` : "Eligible now"}
+              {!hasDonated ? "Eligible now" : cooldownDays > 0 ? `${cooldownDays} days left` : "Eligible now"}
             </span>
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-secondary">
@@ -213,8 +204,8 @@ function Dashboard() {
             />
           </div>
           <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-            <span>Last donation · {formatDate(lastDonation)}</span>
-            <span>Eligible · {formatDate(eligibleOn)}</span>
+            <span>Last donation · {hasDonated ? formatDate(lastDonation) : "No donations yet"}</span>
+            <span>Eligible · {hasDonated ? formatDate(eligibleOn) : "Now"}</span>
           </div>
         </section>
 
@@ -226,7 +217,9 @@ function Dashboard() {
                 Nearby requests
               </div>
               <h2 className="mt-1 text-lg font-semibold text-foreground">
-                {NEARBY.length} verified, within your radius
+                {NEARBY.length === 0
+                  ? "No active requests right now"
+                  : `${NEARBY.length} verified, within your radius`}
               </h2>
             </div>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] text-muted-foreground">
@@ -235,6 +228,17 @@ function Dashboard() {
             </span>
           </div>
 
+          {NEARBY.length === 0 ? (
+            <div className="mt-4 rounded-2xl border border-dashed border-border bg-card/60 p-8 text-center">
+              <div className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-primary/10 text-primary">
+                <HeartPulse className="h-4 w-4" />
+              </div>
+              <div className="mt-3 text-sm font-medium text-foreground">You're all set.</div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                We'll notify you here the moment a verified request matches your blood group and radius.
+              </div>
+            </div>
+          ) : (
           <div className="mt-4 space-y-3">
             {NEARBY.map((r) => (
               <Link
@@ -272,6 +276,7 @@ function Dashboard() {
               </Link>
             ))}
           </div>
+          )}
         </section>
 
         {/* Notification settings */}
