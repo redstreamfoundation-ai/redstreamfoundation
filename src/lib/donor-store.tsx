@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useCallback, useEffect, useState, type ReactNode } from "react";
 
 export type DonorState = {
   fullName: string;
@@ -74,13 +74,19 @@ export function DonorProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
   }, [state]);
-  const update = (patch: Partial<DonorState>) => setState((s) => ({ ...s, ...patch }));
-  const toggleSlot = (k: keyof DonorState["slots"]) =>
-    setState((s) => ({ ...s, slots: { ...s.slots, [k]: !s.slots[k] } }));
-  const reset = () => {
+  const update = useCallback(
+    (patch: Partial<DonorState>) => setState((s) => ({ ...s, ...patch })),
+    [],
+  );
+  const toggleSlot = useCallback(
+    (k: keyof DonorState["slots"]) =>
+      setState((s) => ({ ...s, slots: { ...s.slots, [k]: !s.slots[k] } })),
+    [],
+  );
+  const reset = useCallback(() => {
     setState(DEFAULT);
     try { window.localStorage.removeItem(STORAGE_KEY); } catch {}
-  };
+  }, []);
   return (
     <DonorCtx.Provider value={{ state, update, toggleSlot, reset }}>
       {children}
