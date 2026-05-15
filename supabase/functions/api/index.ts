@@ -427,22 +427,21 @@ Always end with a clear next step — usually one of: 'register donor', 'need bl
 
 const MC_BASE = "https://cpaas.messagecentral.com";
 const MC_CUSTOMER_ID = Deno.env.get("MESSAGE_CENTRAL_CUSTOMER_ID") ?? "";
-const MC_API_KEY = Deno.env.get("MESSAGE_CENTRAL_API_KEY") ?? "";
+const MC_PASSWORD = Deno.env.get("MESSAGE_CENTRAL_PASSWORD") ?? "";
+const MC_EMAIL = Deno.env.get("MESSAGE_CENTRAL_EMAIL") ?? "";
 const PHONE_EMAIL_DOMAIN = "phone.redstream.local";
 
 async function mcToken(): Promise<string> {
-  if (!MC_CUSTOMER_ID || !MC_API_KEY) {
+  if (!MC_CUSTOMER_ID || !MC_PASSWORD || !MC_EMAIL) {
     throw new Error("Phone OTP is not configured. Missing Message Central credentials.");
   }
   const url = new URL(`${MC_BASE}/auth/v1/authentication/token`);
   url.searchParams.set("customerId", MC_CUSTOMER_ID);
-  // Message Central requires `key` to be the base64-encoded password.
-  // Accept either a raw password or an already-base64 value in the secret.
-  const looksBase64 = /^[A-Za-z0-9+/=]+$/.test(MC_API_KEY) && MC_API_KEY.length % 4 === 0;
-  const keyParam = looksBase64 ? MC_API_KEY : btoa(MC_API_KEY);
-  url.searchParams.set("key", keyParam);
-  url.searchParams.set("scope", "NEW");
+  // MESSAGE_CENTRAL_PASSWORD is already base64-encoded.
+  url.searchParams.set("key", MC_PASSWORD);
+  url.searchParams.set("email", MC_EMAIL);
   url.searchParams.set("country", "91");
+  url.searchParams.set("scope", "NEW");
   const res = await fetch(url.toString(), { method: "GET" });
   const text = await res.text();
   if (!res.ok) throw new Error(`Message Central token failed [${res.status}]: ${text}`);
@@ -464,7 +463,7 @@ function validIndianMobile(phone: unknown): phone is string {
 }
 
 async function derivePassword(phone: string): Promise<string> {
-  const data = new TextEncoder().encode(`rs:${MC_API_KEY}:${phone}`);
+  const data = new TextEncoder().encode(`rs:${MC_PASSWORD}:${phone}`);
   const buf = await crypto.subtle.digest("SHA-256", data);
   const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
   return "Rs!" + b64.replace(/[+/=]/g, "x").slice(0, 40);
