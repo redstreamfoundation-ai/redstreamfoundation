@@ -425,6 +425,41 @@ WHAT YOU CAN HELP WITH
 
 Always end with a clear next step — usually one of: 'register donor', 'need blood', 'help', or a short follow-up question.`;
 
+const MC_BASE = "https://cpaas.messagecentral.com";
+const MC_CUSTOMER_ID = Deno.env.get("MESSAGE_CENTRAL_CUSTOMER_ID") ?? "";
+const MC_API_KEY = Deno.env.get("MESSAGE_CENTRAL_API_KEY") ?? "";
+const PHONE_EMAIL_DOMAIN = "phone.redstream.local";
+
+async function mcToken(): Promise<string> {
+  if (!MC_CUSTOMER_ID || !MC_API_KEY) {
+    throw new Error("Phone OTP is not configured. Missing Message Central credentials.");
+  }
+  const url = new URL(`${MC_BASE}/auth/v1/authentication/token`);
+  url.searchParams.set("customerId", MC_CUSTOMER_ID);
+  url.searchParams.set("key", MC_API_KEY);
+  url.searchParams.set("scope", "NEW");
+  url.searchParams.set("country", "91");
+  const res = await fetch(url.toString(), { method: "GET" });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`Message Central token failed [${res.status}]: ${text}`);
+  let body: Record<string, unknown> = {};
+  try { body = JSON.parse(text); } catch { /* noop */ }
+  const token = (body.token ?? body.authToken) as string | undefined;
+  if (!token) throw new Error("Message Central did not return a token");
+  return token;
+}
+
+function validIndianMobile(phone: unknown): phone is string {
+  return typeof phone === "string" && /^[6-9]\d{9}$/.test(phone);
+}
+
+async function derivePassword(phone: string): Promise<string> {
+  const data = new TextEncoder().encode(`rs:${MC_API_KEY}:${phone}`);
+  const buf = await crypto.subtle.digest("SHA-256", data);
+  const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+  return "Rs!" + b64.replace(/[+/=]/g, "x").slice(0, 40);
+}
+
 const PUBLIC_HANDLERS: Record<string, (p: any) => Promise<unknown>> = {
   chatbotReply: async (p) => {
     if (!LOVABLE_API_KEY) throw new Error("Chat is not configured. LOVABLE_API_KEY missing.");
@@ -449,6 +484,86 @@ const PUBLIC_HANDLERS: Record<string, (p: any) => Promise<unknown>> = {
     const reply = j.choices?.[0]?.message?.content?.trim();
     if (!reply) throw new Error("Empty response from assistant.");
     return { reply };
+  },
+
+  sendPhoneOtp: async (p) => {
+    if (!validIndianMobile(p?.phone)) {
+      throw new Error("Enter a valid 10-digit Indian mobile number.");
+    }
+    const token = await mcToken();
+    const url = new URL(`${MC_BASE}/verification/v3/send`);
+    url.searchParams.set("countryCode", "91");
+    url.searchParams.set("flowType", "SMS");
+    url.searchParams.set("mobileNumber", p.phone);
+    const res = await fetch(url.toString(), { method: "POST", headers: { authToken: token } });
+    const body = await res.json().catch(() => ({} as Record<string, unknown>));
+    if (!res.ok) {
+      const msg = (body as { message?: string })?.message ?? `OTP send failed [${res.status}]`;
+      throw new Error(msg);
+    }
+    const d = (body as { data?: Record<string, unknown> }).data ?? {};
+    const verificationId =
+      d.verificationId ?? (body as Record<string, unknown>).verificationId ?? d.transactionId;
+    if (!verificationId) throw new Error("OTP send response missing verificationId.");
+    return { verificationId: String(verificationId) };
+  },
+
+  verifyPhoneOtp: async (p) => {
+    if (!validIndianMobile(p?.phone)) throw new Error("Invalid phone number.");
+    const code = String(p?.code ?? "");
+    const verificationId = String(p?.verificationId ?? "");
+    if (!/^\d{4,6}$/.test(code)) throw new Error("Enter the OTP from your SMS.");
+    if (!verificationId) throw new Error("Missing verification id. Please request a new OTP.");
+    const intendedRole: "donor" | "patient" = p?.intendedRole === "patient" ? "patient" : "donor";
+
+    const token = await mcToken();
+    const url = new URL(`${MC_BASE}/verification/v3/validateOtp`);
+    url.searchParams.set("verificationId", verificationId);
+    url.searchParams.set("code", code);
+    url.searchParams.set("countryCode", "91");
+    url.searchParams.set("mobileNumber", p.phone);
+    const res = await fetch(url.toString(), { method: "GET", headers: { authToken: token } });
+    const body = await res.json().catch(() => ({} as Record<string, unknown>));
+    if (!res.ok) {
+      const msg = (body as { message?: string })?.message ?? `OTP validation failed [${res.status}]`;
+      throw new Error(msg);
+    }
+    const d = (body as { data?: Record<string, unknown> }).data ?? {};
+    const status = d.verificationStatus ?? (body as Record<string, unknown>).verificationStatus;
+    if (status !== "VERIFICATION_COMPLETED" && status !== "AUTH_COMPLETED") {
+      const msg = (body as { message?: string })?.message ?? "Invalid OTP. Please try again.";
+      throw new Error(msg);
+    }
+
+    // Establish a Supabase identity for this phone via deterministic email/password.
+    const email = `${p.phone}@${PHONE_EMAIL_DOMAIN}`;
+    const password = await derivePassword(p.phone);
+    const anon = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    let signInData = (await anon.auth.signInWithPassword({ email, password })).data;
+    if (!signInData?.session) {
+      const created = await admin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { phone: p.phone, intended_role: intendedRole, full_name: "" },
+      });
+      if (created.error && !/already|exists|registered/i.test(created.error.message)) {
+        throw new Error(`Could not create account: ${created.error.message}`);
+      }
+      const retry = await anon.auth.signInWithPassword({ email, password });
+      if (retry.error || !retry.data.session) {
+        throw new Error(retry.error?.message ?? "Sign-in failed after account creation.");
+      }
+      signInData = retry.data;
+    }
+
+    return {
+      access_token: signInData.session!.access_token,
+      refresh_token: signInData.session!.refresh_token,
+      intendedRole,
+    };
   },
 };
 
