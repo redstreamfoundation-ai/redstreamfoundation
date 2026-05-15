@@ -1,10 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ChevronRight, User, Phone, MapPin, Briefcase, Calendar, Droplet, Check } from "lucide-react";
+import { ChevronRight, User, Phone, MapPin, Briefcase, Calendar as CalendarIcon, Droplet, Check } from "lucide-react";
+import { format, parseISO, isValid } from "date-fns";
 import { PrimaryButton, StepShell } from "@/components/request/StepShell";
 import { useDonor } from "@/lib/donor-store";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/donor/register")({
   component: DonorRegister,
@@ -37,8 +41,6 @@ function DonorRegister() {
   const { state, update } = useDonor();
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const [otpSent, setOtpSent] = useState(false);
-  const [seconds, setSeconds] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,6 +49,11 @@ function DonorRegister() {
     if (!user) {
       navigate({ to: "/auth", search: { redirect: "/donor/register" }, replace: true });
       return;
+    }
+    // The user signed in via mobile OTP — their phone is already verified.
+    const verifiedPhone = (user.phone || "").replace(/\D/g, "").replace(/^91/, "").slice(-10);
+    if (verifiedPhone) {
+      update({ phone: verifiedPhone, otpVerified: true });
     }
     (async () => {
       const { data } = await supabase.from("donors").select("*").eq("user_id", user.id).maybeSingle();
@@ -77,23 +84,6 @@ function DonorRegister() {
       }
     })();
   }, [user, loading, navigate, update]);
-
-  useEffect(() => {
-    if (!otpSent || seconds <= 0) return;
-    const t = setTimeout(() => setSeconds((s) => s - 1), 1000);
-    return () => clearTimeout(t);
-  }, [otpSent, seconds]);
-
-  const sendOtp = () => {
-    if (state.phone.length < 10) return;
-    setOtpSent(true);
-    setSeconds(30);
-  };
-
-  const verify = () => {
-    if (state.otp.length !== 4) return;
-    update({ otpVerified: true });
-  };
 
   const valid =
     state.fullName.trim() &&
@@ -160,59 +150,21 @@ function DonorRegister() {
             <div className="relative flex-1">
               <Phone className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
-                value={state.phone}
-                onChange={(e) =>
-                  update({ phone: e.target.value.replace(/\D/g, "").slice(0, 10) })
-                }
-                placeholder="10-digit mobile"
+                value={state.phone ? `+91 ${state.phone}` : ""}
+                readOnly
+                disabled
                 inputMode="tel"
-                disabled={state.otpVerified}
-                className="w-full rounded-2xl border border-border bg-card py-3.5 pl-11 pr-4 text-sm text-foreground shadow-[var(--shadow-soft)] outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60"
+                className="w-full rounded-2xl border border-border bg-secondary/40 py-3.5 pl-11 pr-4 text-sm text-foreground shadow-[var(--shadow-soft)] outline-none disabled:cursor-not-allowed"
               />
             </div>
-            <button
-              onClick={sendOtp}
-              disabled={state.phone.length < 10 || state.otpVerified || (otpSent && seconds > 0)}
-              className="shrink-0 rounded-2xl border border-border bg-background px-4 text-xs font-semibold text-primary transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {state.otpVerified
-                ? "Verified"
-                : !otpSent
-                ? "Send OTP"
-                : seconds > 0
-                ? `${seconds}s`
-                : "Resend"}
-            </button>
+            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 text-xs font-semibold text-emerald-700">
+              <Check className="h-3.5 w-3.5" /> Verified
+            </span>
           </div>
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
+            Verified at sign-in. Contact support to change your registered number.
+          </p>
         </div>
-
-        {otpSent && !state.otpVerified ? (
-          <div className="mt-3 rounded-2xl border border-border bg-secondary/60 p-4 animate-slide-up">
-            <Label>Enter the 4-digit code we just sent</Label>
-            <div className="mt-3 flex items-center gap-3">
-              <input
-                value={state.otp}
-                onChange={(e) => update({ otp: e.target.value.replace(/\D/g, "").slice(0, 4) })}
-                placeholder="• • • •"
-                inputMode="numeric"
-                className="w-32 rounded-xl border border-border bg-background px-4 py-3 text-center font-mono text-lg tracking-[0.4em] text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-              />
-              <button
-                onClick={verify}
-                disabled={state.otp.length !== 4}
-                className="rounded-full bg-primary px-4 py-2.5 text-xs font-semibold text-primary-foreground disabled:opacity-50"
-              >
-                Verify
-              </button>
-            </div>
-          </div>
-        ) : null}
-
-        {state.otpVerified ? (
-          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-700 animate-slide-up">
-            <Check className="h-3.5 w-3.5" /> Number verified
-          </div>
-        ) : null}
       </Section>
 
       <Section title="Donation profile">
@@ -261,16 +213,56 @@ function DonorRegister() {
             value={state.profession}
             onChange={(v) => update({ profession: v.slice(0, 60) })}
           />
-          <Field
-            icon={Calendar}
+          <DateField
             label="Last donation date"
-            placeholder="YYYY-MM-DD"
             value={state.lastDonation}
-            onChange={(v) => update({ lastDonation: v.slice(0, 10) })}
+            onChange={(v) => update({ lastDonation: v })}
           />
         </div>
       </Section>
     </StepShell>
+  );
+}
+
+function DateField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const parsed = value ? parseISO(value) : undefined;
+  const selected = parsed && isValid(parsed) ? parsed : undefined;
+  return (
+    <div className="block">
+      <Label>{label}</Label>
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className={cn(
+              "mt-2 flex w-full items-center gap-3 rounded-2xl border border-border bg-background py-3.5 pl-4 pr-4 text-left text-sm shadow-[var(--shadow-soft)] outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20",
+              !selected && "text-muted-foreground",
+            )}
+          >
+            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+            {selected ? format(selected, "PPP") : "Pick a date"}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={selected}
+            onSelect={(d) => onChange(d ? format(d, "yyyy-MM-dd") : "")}
+            disabled={(date) => date > new Date() || date < new Date("1980-01-01")}
+            initialFocus
+            className={cn("p-3 pointer-events-auto")}
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }
 
